@@ -1,0 +1,1117 @@
+<!doctype html>
+<html lang="en-GB" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0D1514">
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="Personal training schedule and log. Everything stays on this device.">
+<title>Edinburgh 2027</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<script>
+try { var t = localStorage.getItem("e27-theme"); if (t === "light" || t === "auto" || t === "dark") document.documentElement.setAttribute("data-theme", t); } catch (e) {}
+</script>
+<style>
+/* Layout: one column, sticky header, fixed tab bar for the thumb. Colours are the plan's HR zones. */
+:root{
+  --paper:#F1F5F3; --card:#FCFDFC; --sunk:#E5ECE9; --ink:#13201E; --ink-2:#4E605D; --ink-3:#7D8E8B; --rule:#D3DDDA;
+  --z1:#2C7DA0; --z2:#23865A; --z3:#B5731B; --str:#6A51B5; --rest:#8C9A97; --race:#C03E2D;
+  --good:#1D6F47; --good-bg:#DCF1E5; --warn:#7E4C00; --warn-bg:#FCEFD3; --bad:#A93526; --bad-bg:#FADFDA;
+  --accent:#1D7550; --on-accent:#FFFFFF;
+  --f-display:"Roboto Condensed","sans-serif-condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --f-data:ui-monospace,"Roboto Mono",SFMono-Regular,Menlo,Consolas,monospace;
+  --tab-h:64px;
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --paper:#0D1514; --card:#151F1D; --sunk:#0A100F; --ink:#E4EDEA; --ink-2:#A1B3AF; --ink-3:#6C7F7B; --rule:#263533;
+  --z1:#5BAED2; --z2:#4CC489; --z3:#E8A94B; --str:#A88EF2; --rest:#6C7C79; --race:#F06A55;
+  --good:#5ED39A; --good-bg:#12301F; --warn:#F2B65A; --warn-bg:#33270F; --bad:#FF8F7E; --bad-bg:#3A1A15;
+  --accent:#4CC489; --on-accent:#0D1514; color-scheme:dark;
+}
+@media (prefers-color-scheme: dark){
+  :root[data-theme="auto"]{
+    --paper:#0D1514; --card:#151F1D; --sunk:#0A100F; --ink:#E4EDEA; --ink-2:#A1B3AF; --ink-3:#6C7F7B; --rule:#263533;
+    --z1:#5BAED2; --z2:#4CC489; --z3:#E8A94B; --str:#A88EF2; --rest:#6C7C79; --race:#F06A55;
+    --good:#5ED39A; --good-bg:#12301F; --warn:#F2B65A; --warn-bg:#33270F; --bad:#FF8F7E; --bad-bg:#3A1A15;
+    --accent:#4CC489; --on-accent:#0D1514; color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.45;
+  -webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;
+  padding-bottom:calc(var(--tab-h) + env(safe-area-inset-bottom,0px) + 24px)}
+[hidden]{display:none!important}
+button,input,select,textarea{font:inherit;color:inherit}
+.wrap{max-width:600px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.tone-z1{--tone:var(--z1)}.tone-z2{--tone:var(--z2)}.tone-z3{--tone:var(--z3)}
+.tone-str{--tone:var(--str)}.tone-rest{--tone:var(--rest)}.tone-race{--tone:var(--race)}
+.data{font-family:var(--f-data);font-variant-numeric:tabular-nums}
+
+/* header */
+header.top{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--rule);
+  padding-top:env(safe-area-inset-top,0px)}
+header.top .wrap{padding-block:8px}
+.navrow{display:flex;align-items:center;gap:10px;min-height:52px}
+.navrow .tt{flex:1;min-width:0;text-align:center}
+.navrow .tt b{display:block;font-family:var(--f-display);font-weight:700;font-size:21px;letter-spacing:.03em;text-transform:uppercase;line-height:1.15}
+.navrow .tt span{display:block;font-size:13px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.navbtn{flex:0 0 48px;height:48px;border-radius:12px;border:1px solid var(--rule);background:var(--card);font-size:22px;line-height:1;cursor:pointer}
+.navbtn:disabled{opacity:.3}
+.subrow{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);min-height:28px}
+.pill{border:1px solid var(--accent);color:var(--accent);background:transparent;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;min-height:32px}
+#saveMark{color:var(--ink-3);text-transform:none;letter-spacing:0;transition:opacity .4s}
+#saveMark.err{color:var(--bad)}
+
+/* tabs */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--card);border-top:1px solid var(--rule);
+  display:grid;grid-template-columns:repeat(5,1fr);padding-bottom:env(safe-area-inset-bottom,0px);
+  padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+nav.tabs button{height:var(--tab-h);border:0;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  font-size:12px;font-weight:600;color:var(--ink-3);cursor:pointer}
+nav.tabs button svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+nav.tabs button[aria-current="page"]{color:var(--accent)}
+
+main{display:grid;gap:16px;padding-block:16px}
+.card{background:var(--card);border:1px solid var(--rule);border-radius:16px;overflow:hidden}
+.pad{padding:16px}
+h2.ct{font-family:var(--f-display);font-weight:700;font-size:20px;letter-spacing:.04em;text-transform:uppercase;margin:0 0 12px}
+.hint{color:var(--ink-2);font-size:15px;margin:8px 0 0}
+.muted{color:var(--ink-2)}
+
+/* plan card */
+.plan .top{padding:16px 16px 18px;border-top:5px solid var(--tone)}
+.dateline{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+.chip{font-size:11px;font-weight:700;letter-spacing:.1em;padding:2px 8px;border-radius:999px;border:1px solid currentColor;text-transform:uppercase}
+.chip.now{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.chip.gate{color:var(--race)}
+.plan h1{font-family:var(--f-display);font-weight:700;font-size:32px;line-height:1.05;margin:8px 0 0;text-wrap:balance}
+.mins{display:flex;align-items:baseline;gap:8px;margin-top:6px}
+.mins b{font-family:var(--f-display);font-weight:700;font-size:64px;line-height:.95;color:var(--tone);font-variant-numeric:tabular-nums}
+.mins span{font-size:14px;color:var(--ink-2);letter-spacing:.08em;text-transform:uppercase}
+.lead{font-size:17px;font-weight:600;margin-top:8px}
+.cap{margin-top:12px;padding:10px 12px;border-radius:10px;background:var(--sunk);font-size:15px}
+.cap.warn{background:var(--warn-bg);color:var(--warn)}
+.hr{margin-top:14px}
+.hr-head{display:flex;justify-content:space-between;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+.hr-head .data{letter-spacing:0;text-transform:none;font-size:14px;color:var(--ink)}
+.track{position:relative;height:28px;margin-top:20px;border-radius:6px;background:var(--sunk);border:1px solid var(--rule)}
+.seg{position:absolute;top:0;bottom:0;opacity:.2;background:var(--tone)}
+.fill{position:absolute;top:5px;bottom:5px;border-radius:4px;background:var(--tone)}
+.lthr{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--race)}
+.lthr::after{content:"LTHR 188";position:absolute;bottom:calc(100% + 2px);left:50%;transform:translateX(-50%);font-family:var(--f-data);font-size:10px;color:var(--race);white-space:nowrap}
+.ticks{position:relative;height:16px;margin-top:4px;font-family:var(--f-data);font-size:10px;color:var(--ink-3)}
+.ticks span{position:absolute;transform:translateX(-50%)}
+.hrnote{font-size:14px;color:var(--ink-2);margin-top:4px}
+.hip{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin-top:14px;background:var(--rule);border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+.hip div{background:var(--card);padding:8px 10px;font-size:13px;line-height:1.3}
+.hip div b{display:block;font-family:var(--f-display);font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2)}
+.exlist{list-style:none;margin:12px 0 0;padding:0;border-top:1px solid var(--rule)}
+.exlist li{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--rule)}
+.exlist li span:first-child{font-weight:600}
+.exlist li span:last-child{font-family:var(--f-data);font-size:14px;color:var(--ink-2);white-space:nowrap}
+.note{margin-top:12px;padding:10px 12px;border-radius:10px;border:1px solid var(--rule);background:var(--paper);font-size:15px}
+.note b{font-family:var(--f-display);letter-spacing:.06em;text-transform:uppercase}
+.note.heat{border-color:var(--race)} .note.heat b{color:var(--race)}
+.note.later b{color:var(--str)}
+details.more{border-top:1px solid var(--rule)}
+details.more>summary{list-style:none;cursor:pointer;padding:14px 16px;min-height:48px;display:flex;justify-content:space-between;align-items:center;
+  font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2)}
+details.more>summary::-webkit-details-marker{display:none}
+details.more>summary::after{content:"+";font-family:var(--f-data);font-size:18px;color:var(--ink-3)}
+details.more[open]>summary::after{content:"\2212"}
+details.more p{margin:0;padding:0 16px 16px;font-size:16px;line-height:1.6}
+
+/* forms */
+details.form>summary{list-style:none;cursor:pointer;padding:16px;min-height:56px;display:flex;flex-direction:column;justify-content:center;gap:2px}
+details.form>summary::-webkit-details-marker{display:none}
+.sum-t{font-family:var(--f-display);font-weight:700;font-size:20px;letter-spacing:.04em;text-transform:uppercase}
+.sum-s{font-size:14px;color:var(--ink-2)}
+.fbody{padding:0 16px 16px;display:grid;gap:14px}
+section.form{padding:16px;display:grid;gap:14px}
+section.form h2.ct{margin:0}
+.field{display:grid;gap:6px;min-width:0}
+.field>label,.field>.lab{font-size:13px;font-weight:600;letter-spacing:.04em;color:var(--ink-2);display:flex;justify-content:space-between;gap:8px}
+.field .ends{font-weight:400;color:var(--ink-3);letter-spacing:0}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+input.inp,select.inp,textarea.inp{width:100%;min-height:52px;border-radius:12px;border:1px solid var(--rule);background:var(--paper);padding:12px;font-size:18px}
+textarea.inp{min-height:88px;resize:vertical;font-size:16px;line-height:1.4}
+input.inp:focus,select.inp:focus,textarea.inp:focus{outline:2px solid var(--accent);outline-offset:1px}
+.seg2{display:grid;gap:6px}
+.seg2 button,.status button{min-height:48px;border-radius:10px;border:1px solid var(--rule);background:var(--paper);font-size:17px;font-weight:600;cursor:pointer;padding:0 4px}
+.seg2 button[aria-pressed="true"],.status button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.status{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.status button{min-height:56px;font-size:16px}
+.stepper{display:grid;grid-template-columns:48px 1fr 48px;align-items:center;border:1px solid var(--rule);border-radius:12px;overflow:hidden;background:var(--paper)}
+.stepper button{height:50px;border:0;background:transparent;font-size:24px;cursor:pointer}
+.stepper button:active{background:var(--sunk)}
+.stepper .v{text-align:center;font-family:var(--f-data);font-size:20px;font-variant-numeric:tabular-nums;cursor:pointer;height:50px;line-height:50px;border-left:1px solid var(--rule);border-right:1px solid var(--rule)}
+.stepper .v.empty{color:var(--ink-3)}
+.physio{display:grid;gap:10px;border-top:1px solid var(--rule);padding-top:14px}
+.physio .ph-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.physio .ph-h b{font-family:var(--f-display);font-size:18px;letter-spacing:.04em;text-transform:uppercase;color:var(--str)}
+.physio .ph-h span{font-size:13px;color:var(--ink-2)}
+.excard{border:1px solid var(--rule);border-radius:12px;padding:12px;display:grid;gap:10px;background:var(--paper)}
+.excard .exh{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.excard .exh b{font-size:16px}
+.excard .exh span{font-family:var(--f-data);font-size:13px;color:var(--ink-2);white-space:nowrap}
+.fb{display:grid;gap:8px}
+.flag{padding:10px 12px;border-radius:10px;font-size:15px;background:var(--sunk)}
+.flag.good{background:var(--good-bg);color:var(--good)}
+.flag.warn{background:var(--warn-bg);color:var(--warn)}
+.flag.bad{background:var(--bad-bg);color:var(--bad)}
+
+/* week */
+.decision{padding:16px;display:grid;gap:6px}
+.decision .big{font-family:var(--f-display);font-weight:700;font-size:40px;line-height:1;letter-spacing:.02em}
+.decision.hold .big{color:var(--warn)} .decision.go .big{color:var(--good)} .decision.none .big{color:var(--ink-3)}
+.decision ul{margin:4px 0 0;padding-left:20px;color:var(--ink-2)}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:12px;min-width:0}
+.tile .k{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+.tile .v{font-family:var(--f-display);font-weight:700;font-size:28px;line-height:1.1;font-variant-numeric:tabular-nums}
+.tile .s{font-size:13px;color:var(--ink-2)}
+.tile.warn .v{color:var(--warn)} .tile.bad .v{color:var(--bad)}
+.dlist{display:grid}
+.drow{display:grid;grid-template-columns:44px 4px 1fr auto;gap:12px;align-items:center;padding:10px 12px;min-height:64px;border:0;border-bottom:1px solid var(--rule);
+  background:transparent;text-align:left;cursor:pointer;width:100%}
+.drow:last-child{border-bottom:0}
+.drow .d{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);line-height:1.2}
+.drow .d i{display:block;font-style:normal;font-family:var(--f-data);font-size:15px;color:var(--ink);letter-spacing:0}
+.drow .st{align-self:stretch;border-radius:2px;background:var(--tone)}
+.drow .t{min-width:0}
+.drow .t b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.drow .t>span{display:block;font-size:13px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.drow .r{text-align:right;font-family:var(--f-data);font-size:13px;color:var(--ink-2);white-space:nowrap}
+.drow .r b{display:block;font-family:var(--f-display);font-size:20px;color:var(--ink)}
+.drow.today .d{color:var(--accent);font-weight:700}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.06em;padding:1px 6px;border-radius:6px;text-transform:uppercase}
+.badge.ok{background:var(--good-bg);color:var(--good)} .badge.bad{background:var(--bad-bg);color:var(--bad)} .badge.mid{background:var(--warn-bg);color:var(--warn)}
+
+/* buttons */
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{min-height:52px;border-radius:12px;border:1px solid var(--rule);background:var(--card);font-weight:700;font-size:16px;cursor:pointer;padding:0 12px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.danger{border-color:var(--bad);color:var(--bad);background:transparent}
+.btn.full{grid-column:1 / -1}
+.btn:disabled{opacity:.4}
+
+/* report */
+.toggles{display:grid;gap:8px}
+.toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;padding:0 4px;font-size:16px}
+.toggle input{width:26px;height:26px;accent-color:var(--accent)}
+pre.rep{margin:0;padding:14px;background:var(--sunk);border-radius:12px;font-family:var(--f-data);font-size:12.5px;line-height:1.5;
+  white-space:pre-wrap;word-break:break-word;max-height:55vh;overflow:auto;border:1px solid var(--rule)}
+
+/* guide */
+.guide details{border-bottom:1px solid var(--rule)}
+.guide details:last-child{border-bottom:0}
+.guide summary{list-style:none;cursor:pointer;padding:16px;min-height:56px;display:flex;justify-content:space-between;align-items:center;
+  font-family:var(--f-display);font-weight:700;font-size:19px;letter-spacing:.03em;text-transform:uppercase}
+.guide summary::-webkit-details-marker{display:none}
+.guide summary::after{content:"+";font-family:var(--f-data);font-size:18px;color:var(--ink-3)}
+.guide details[open] summary::after{content:"\2212"}
+.guide .gb{padding:0 16px 16px;display:grid;gap:10px;font-size:16px}
+.guide .gb p{margin:0}
+.guide dl{margin:0;display:grid;gap:10px}
+.guide dt{font-weight:700}
+.guide dd{margin:2px 0 0;color:var(--ink-2)}
+.tbl{overflow-x:auto}
+.tbl table{border-collapse:collapse;width:100%;font-size:14px}
+.tbl th,.tbl td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--rule);vertical-align:top}
+.tbl th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2)}
+.src{font-size:13px;color:var(--ink-3)}
+
+/* banners, toast */
+.banner{padding:14px 16px;border-radius:14px;display:grid;gap:10px;background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn)}
+.banner.info{background:var(--card);color:var(--ink);border-color:var(--rule)}
+.banner b{font-size:16px}
+.banner p{margin:0;font-size:15px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--tab-h) + env(safe-area-inset-bottom,0px) + 16px);z-index:40;
+  background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:999px;font-size:15px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s;max-width:calc(100vw - 32px)}
+.toast.on{opacity:1}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:15px}
+.kv dt{color:var(--ink-2)} .kv dd{margin:0;text-align:right;font-family:var(--f-data);font-size:14px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion: no-preference){.fill{transition:left .2s,width .2s}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap" id="top"></div></header>
+<main class="wrap" id="view"></main>
+<nav class="tabs" aria-label="Sections">
+  <button data-tab="today"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 9.5h17M8 3v4M16 3v4M8.5 15l2.3 2.2L15.5 13"/></svg><span>Today</span></button>
+  <button data-tab="week"><svg viewBox="0 0 24 24"><path d="M5 20V12M10 20V6M15 20v-9M20 20V9"/></svg><span>Week</span></button>
+  <button data-tab="report"><svg viewBox="0 0 24 24"><path d="M7 3.5h7l4 4V20a.5.5 0 0 1-.5.5h-10A.5.5 0 0 1 7 20z"/><path d="M14 3.5V8h4M10 12h5M10 15.5h5"/></svg><span>Report</span></button>
+  <button data-tab="guide"><svg viewBox="0 0 24 24"><path d="M4 5.5c3-1.5 6-1.5 8 .5 2-2 5-2 8-.5v13c-3-1.5-6-1.5-8 .5-2-2-5-2-8-.5z"/><path d="M12 6v13.5"/></svg><span>Guide</span></button>
+  <button data-tab="data"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="2.8"/><path d="M5 6v6c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8V6M5 12v6c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8v-6"/></svg><span>Data</span></button>
+</nav>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<input type="file" id="importFile" accept=".json,.txt,application/json,text/plain" hidden>
+<script>
+"use strict";
+const PLAN = {"days":[["2026-11-02",1,"Mon","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,0,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2026-11-03",1,"Tue","Run-Easy","Easy run",20,"150-162, ceiling 167 (Z2)","20 min easy, flat route","Walk 5 min before you start running. 20 min easy, flat route. Metronome 165-170 spm. Pram run? Go by HR, not pace, and push two-handed.",[150,167],0,0,"15 min walk","","z2","150–167 bpm",1],["2026-11-04",1,"Wed","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,0,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2026-11-05",1,"Thu","Run-Easy","Easy run",20,"150-162, ceiling 167 (Z2)","20 min easy, flat route","Walk 5 min before you start running. 20 min easy, flat route. Check cadence twice: count steps for 20 s and multiply by 3.",[150,167],0,0,"15 min walk","","z2","150–167 bpm",1],["2026-11-06",1,"Fri","Cross/Walk","Rest or light walk",0,"","Rest, or an easy walk. No running","Rest, or a 20-40 min walk (pram-friendly). No running. This day protects Saturday.",null,0,0,"","","rest","Rest or walk",0],["2026-11-07",1,"Sat","Run-Long","Long run",30,"Start 145-155, hard cap 165","30 min continuous, conversational","Walk 5 min before you start running. 30 min continuous, easy. Week-1 rule: if your longest run in October was under ~27 min, cap today at 10% over it instead.",[145,165],0,0,"15 min walk","","z2","145–165 bpm",1],["2026-11-08",1,"Sun","Cross/Walk","Walk or rest",0,"","Rest, or an easy walk. No running","30-45 min easy walk, or full rest. Pram-friendly. Not a run - the 4th run day arrives in week 6.",null,0,0,"","","rest","Rest or walk",0],["2026-11-09",2,"Mon","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,0,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2026-11-10",2,"Tue","Run-Easy","Easy run",22,"150-162, ceiling 167 (Z2)","22 min easy, flat route","Walk 5 min before you start running. 22 min easy, flat route. Metronome 165-170 spm. Pram run? Go by HR, not pace, and push two-handed.",[150,167],0,0,"15 min walk","","z2","150–167 bpm",1],["2026-11-11",2,"Wed","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,0,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2026-11-12",2,"Thu","Run-Easy","Easy run",22,"150-162, ceiling 167 (Z2)","22 min easy, flat route","Walk 5 min before you start running. 22 min easy, flat route. Check cadence twice: count steps for 20 s and multiply by 3.",[150,167],0,0,"15 min walk","","z2","150–167 bpm",1],["2026-11-13",2,"Fri","Cross/Walk","Rest or light walk",0,"","Rest, or an easy walk. No running","Rest, or a 20-40 min walk (pram-friendly). No running. This day protects Saturday.",null,0,0,"","","rest","Rest or walk",0],["2026-11-14",2,"Sat","Run-Long","Long run",33,"Start 145-155, hard cap 165","33 min continuous, conversational","Walk 5 min before you start running. 33 min continuous, conversational. CHECK THE RULE before you start: no more than ~10% over your longest run of the last 30 days.",[145,165],0,0,"15 min walk","","z2","145–165 bpm",1],["2026-11-15",2,"Sun","Cross/Walk","Walk or rest",0,"","Rest, or an easy walk. No running","30-45 min easy walk, or full rest. Pram-friendly. Not a run - the 4th run day arrives in week 6.",null,0,0,"","","rest","Rest or walk",0],["2026-11-16",3,"Mon","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,0,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2026-11-17",3,"Tue","Run-Easy","Easy run",24,"150-162, ceiling 167 (Z2)","24 min easy, flat route","Walk 5 min before you start running. 24 min easy, flat route. Metronome 165-170 spm. Pram run? Go by HR, not pace, and push two-handed.",[150,167],0,0,"15 min walk","","z2","150–167 bpm",1],["2026-11-18",3,"Wed","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,0,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2026-11-19",3,"Thu","Run-Easy","Easy run",24,"150-162, ceiling 167 (Z2)","24 min easy, flat route","Walk 5 min before you start running. 24 min easy, flat route. Check cadence twice: count steps for 20 s and multiply by 3.",[150,167],0,0,"15 min walk","","z2","150–167 bpm",1],["2026-11-20",3,"Fri","Cross/Walk","Rest or light walk",0,"","Rest, or an easy walk. No running","Rest, or a 20-40 min walk (pram-friendly). No running. This day protects Saturday.",null,0,0,"","","rest","Rest or walk",0],["2026-11-21",3,"Sat","Run-Long","Long run",36,"Start 145-155, hard cap 165","36 min continuous, conversational","Walk 5 min before you start running. 36 min continuous, conversational. CHECK THE RULE before you start: no more than ~10% over your longest run of the last 30 days.",[145,165],0,0,"15 min walk","","z2","145–165 bpm",1],["2026-11-22",3,"Sun","Cross/Walk","Walk or rest",0,"","Rest, or an easy walk. No running","30-45 min easy walk, or full rest. Pram-friendly. Not a run - the 4th run day arrives in week 6.",null,0,0,"","","rest","Rest or walk",0],["2026-11-23",4,"Mon","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,1,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2026-11-24",4,"Tue","Run-Easy","Easy run",18,"150-162, ceiling 167 (Z2)","18 min easy, flat route","Walk 5 min before you start running. 18 min easy, flat route. Metronome 165-170 spm. Pram run? Go by HR, not pace, and push two-handed.",[150,167],0,1,"15 min walk","","z2","150–167 bpm",1],["2026-11-25",4,"Wed","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,1,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2026-11-26",4,"Thu","Run-Easy","Easy run",18,"150-162, ceiling 167 (Z2)","18 min easy, flat route","Walk 5 min before you start running. 18 min easy, flat route. Check cadence twice: count steps for 20 s and multiply by 3.",[150,167],0,1,"15 min walk","","z2","150–167 bpm",1],["2026-11-27",4,"Fri","Cross/Walk","Rest or light walk",0,"","Rest, or an easy walk. No running","Rest, or a 20-40 min walk (pram-friendly). No running. This day protects Saturday.",null,0,1,"","","rest","Rest or walk",0],["2026-11-28",4,"Sat","Run-Long","Long run",28,"Start 145-155, hard cap 165","28 min continuous, conversational","Walk 5 min before you start running. 28 min continuous, conversational. CHECK THE RULE before you start: no more than ~10% over your longest run of the last 30 days.",[145,165],0,1,"15 min walk","","z2","145–165 bpm",1],["2026-11-29",4,"Sun","Cross/Walk","Walk or rest",0,"","Rest, or an easy walk. No running","30-45 min easy walk, or full rest. Pram-friendly. Not a run - the 4th run day arrives in week 6.",null,0,1,"","","rest","Rest or walk",0],["2026-11-30",5,"Mon","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,0,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2026-12-01",5,"Tue","Run-Easy","Easy run",28,"150-162, ceiling 167 (Z2)","28 min easy, flat route","Walk 5 min before you start running. 28 min easy, flat route. Metronome 165-170 spm. Pram run? Go by HR, not pace, and push two-handed.",[150,167],0,0,"15 min walk","","z2","150–167 bpm",1],["2026-12-02",5,"Wed","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,0,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2026-12-03",5,"Thu","Run-Easy","Easy run",28,"150-162, ceiling 167 (Z2)","28 min easy, flat route","Walk 5 min before you start running. 28 min easy, flat route. Check cadence twice: count steps for 20 s and multiply by 3.",[150,167],0,0,"15 min walk","","z2","150–167 bpm",1],["2026-12-04",5,"Fri","Cross/Walk","Rest or light walk",0,"","Rest, or an easy walk. No running","Rest, or a 20-40 min walk (pram-friendly). No running. This day protects Saturday.",null,0,0,"","","rest","Rest or walk",0],["2026-12-05",5,"Sat","Run-Long","Long run",39,"Start 145-155, hard cap 165","39 min continuous, conversational","Walk 5 min before you start running. 39 min continuous, conversational. CHECK THE RULE before you start: no more than ~10% over your longest run of the last 30 days.",[145,165],0,0,"15 min walk","","z2","145–165 bpm",1],["2026-12-06",5,"Sun","Cross/Walk","Walk or rest",0,"","Rest, or an easy walk. No running","30-45 min easy walk, or full rest. Pram-friendly. Not a run - the 4th run day arrives in week 6.",null,0,0,"","","rest","Rest or walk",0],["2026-12-07",6,"Mon","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,0,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2026-12-08",6,"Tue","Run-Easy","Easy run",30,"150-162, ceiling 167 (Z2)","30 min easy, flat route","Walk 5 min before you start running. 30 min easy, flat route. Metronome 165-170 spm. Pram run? Go by HR, not pace, and push two-handed.",[150,167],0,0,"15 min walk","","z2","150–167 bpm",1],["2026-12-09",6,"Wed","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,0,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2026-12-10",6,"Thu","Run-Easy","Easy run",30,"150-162, ceiling 167 (Z2)","30 min easy, flat route","Walk 5 min before you start running. 30 min easy, flat route. Check cadence twice: count steps for 20 s and multiply by 3.",[150,167],0,0,"15 min walk","","z2","150–167 bpm",1],["2026-12-11",6,"Fri","Cross/Walk","Rest or light walk",0,"","Rest, or an easy walk. No running","Rest, or a 20-40 min walk (pram-friendly). No running. This day protects Saturday.",null,0,0,"","","rest","Rest or walk",0],["2026-12-12",6,"Sat","Run-Long","Long run",42,"Start 145-155, hard cap 165","42 min continuous, conversational","Walk 5 min before you start running. 42 min continuous, conversational. CHECK THE RULE before you start: no more than ~10% over your longest run of the last 30 days. Also your DECOUPLING BASELINE: flat route, steady effort, chest strap. Note the decoupling figure in today's notes.",[145,165],0,0,"15 min walk","","z2","145–165 bpm",1],["2026-12-13",6,"Sun","Run-Easy","Recovery run (HRV-gated)",20,"133-150 (Z1)","20 min very easy","20 min very easy, the gentlest run of the week. 4th run day - new this week, nothing else changes. Rolling HRV below your band, or hip on waking at 3/10 or more? Walk instead. This is the first session to bin, never the long run.",[133,150],0,0,"15 min walk","","z1","133–150 bpm",1],["2026-12-14",7,"Mon","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,0,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2026-12-15",7,"Tue","Run-Easy","Easy run",32,"150-162, ceiling 167 (Z2)","32 min easy, flat route","Walk 5 min before you start running. 32 min easy, flat route. Metronome 165-170 spm. Pram run? Go by HR, not pace, and push two-handed.",[150,167],0,0,"15 min walk","","z2","150–167 bpm",1],["2026-12-16",7,"Wed","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,0,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2026-12-17",7,"Thu","Run-Easy","Easy run",32,"150-162, ceiling 167 (Z2)","32 min easy, flat route","Walk 5 min before you start running. 32 min easy, flat route. Check cadence twice: count steps for 20 s and multiply by 3.",[150,167],0,0,"15 min walk","","z2","150–167 bpm",1],["2026-12-18",7,"Fri","Cross/Walk","Rest or light walk",0,"","Rest, or an easy walk. No running","Rest, or a 20-40 min walk (pram-friendly). No running. This day protects Saturday.",null,0,0,"","","rest","Rest or walk",0],["2026-12-19",7,"Sat","Run-Long","Long run",46,"Start 145-155, hard cap 165","46 min continuous, conversational","Walk 5 min before you start running. 46 min continuous, conversational. CHECK THE RULE before you start: no more than ~10% over your longest run of the last 30 days.",[145,165],0,0,"15 min walk","","z2","145–165 bpm",1],["2026-12-20",7,"Sun","Run-Easy","Recovery run (HRV-gated)",20,"133-150 (Z1)","20 min very easy","20 min very easy, the gentlest run of the week. Rolling HRV below your band, or hip on waking at 3/10 or more? Walk instead. This is the first session to bin, never the long run.",[133,150],0,0,"15 min walk","","z1","133–150 bpm",1],["2026-12-21",8,"Mon","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,1,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2026-12-22",8,"Tue","Run-Easy","Easy run",24,"150-162, ceiling 167 (Z2)","24 min easy, flat route","Walk 5 min before you start running. 24 min easy, flat route. Metronome 165-170 spm. Pram run? Go by HR, not pace, and push two-handed.",[150,167],0,1,"15 min walk","","z2","150–167 bpm",1],["2026-12-23",8,"Wed","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,1,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2026-12-24",8,"Thu","Run-Easy","Easy run",24,"150-162, ceiling 167 (Z2)","24 min easy, flat route","Walk 5 min before you start running. 24 min easy, flat route. Check cadence twice: count steps for 20 s and multiply by 3.",[150,167],0,1,"15 min walk","","z2","150–167 bpm",1],["2026-12-25",8,"Fri","Cross/Walk","Rest or light walk",0,"","Rest, or an easy walk. No running","Rest, or a 20-40 min walk (pram-friendly). No running. This day protects Saturday.",null,0,1,"","","rest","Rest or walk",0],["2026-12-26",8,"Sat","Run-Long","Long run",35,"Start 145-155, hard cap 165","35 min continuous, conversational","Walk 5 min before you start running. 35 min continuous, conversational. CHECK THE RULE before you start: no more than ~10% over your longest run of the last 30 days.",[145,165],0,1,"15 min walk","","z2","145–165 bpm",1],["2026-12-27",8,"Sun","Run-Easy","Recovery run (HRV-gated)",20,"133-150 (Z1)","20 min very easy","20 min very easy, the gentlest run of the week. Rolling HRV below your band, or hip on waking at 3/10 or more? Walk instead. This is the first session to bin, never the long run.",[133,150],0,1,"15 min walk","","z1","133–150 bpm",1],["2026-12-28",9,"Mon","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,0,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2026-12-29",9,"Tue","Run-Easy","Easy run",35,"150-162, ceiling 167 (Z2)","35 min easy, flat route","35 min easy, flat route. Metronome 165-170 spm. Pram run? Go by HR, not pace, and push two-handed.",[150,167],0,0,"15 min walk","","z2","150–167 bpm",1],["2026-12-30",9,"Wed","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,0,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2026-12-31",9,"Thu","Run-Easy","Easy run",35,"150-162, ceiling 167 (Z2)","35 min easy, flat route","35 min easy, flat route. Check cadence twice: count steps for 20 s and multiply by 3.",[150,167],0,0,"15 min walk","","z2","150–167 bpm",1],["2027-01-01",9,"Fri","Cross/Walk","Rest or light walk",0,"","Rest, or an easy walk. No running","Rest, or a 20-40 min walk (pram-friendly). No running. This day protects Saturday.",null,0,0,"","","rest","Rest or walk",0],["2027-01-02",9,"Sat","Run-Long","Long run",50,"Start 145-155, hard cap 165","50 min continuous, conversational","50 min continuous, conversational. CHECK THE RULE before you start: no more than ~10% over your longest run of the last 30 days.",[145,165],0,0,"15 min walk","","z2","145–165 bpm",1],["2027-01-03",9,"Sun","Run-Easy","Recovery run (HRV-gated)",21,"133-150 (Z1)","21 min very easy","21 min very easy, the gentlest run of the week. Rolling HRV below your band, or hip on waking at 3/10 or more? Walk instead. This is the first session to bin, never the long run.",[133,150],0,0,"15 min walk","","z1","133–150 bpm",1],["2027-01-04",10,"Mon","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,0,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2027-01-05",10,"Tue","Run-Easy","Easy run",38,"150-162, ceiling 167 (Z2)","38 min easy, flat route","38 min easy, flat route. Metronome 165-170 spm. Pram run? Go by HR, not pace, and push two-handed.",[150,167],0,0,"15 min walk","","z2","150–167 bpm",1],["2027-01-06",10,"Wed","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,0,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2027-01-07",10,"Thu","Run-Easy","Easy run",38,"150-162, ceiling 167 (Z2)","38 min easy, flat route","38 min easy, flat route. Check cadence twice: count steps for 20 s and multiply by 3.",[150,167],0,0,"15 min walk","","z2","150–167 bpm",1],["2027-01-08",10,"Fri","Cross/Walk","Rest or light walk",0,"","Rest, or an easy walk. No running","Rest, or a 20-40 min walk (pram-friendly). No running. This day protects Saturday.",null,0,0,"","","rest","Rest or walk",0],["2027-01-09",10,"Sat","Run-Long","Long run",55,"Start 145-155, hard cap 165","55 min continuous, conversational","55 min continuous, conversational. CHECK THE RULE before you start: no more than ~10% over your longest run of the last 30 days.",[145,165],0,0,"15 min walk","","z2","145–165 bpm",1],["2027-01-10",10,"Sun","Run-Easy","Recovery run (HRV-gated)",23,"133-150 (Z1)","23 min very easy","23 min very easy, the gentlest run of the week. Rolling HRV below your band, or hip on waking at 3/10 or more? Walk instead. This is the first session to bin, never the long run.",[133,150],0,0,"15 min walk","","z1","133–150 bpm",1],["2027-01-11",11,"Mon","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,0,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2027-01-12",11,"Tue","Run-Easy","Easy run",40,"150-162, ceiling 167 (Z2)","40 min easy, flat route","40 min easy, flat route. Metronome 165-170 spm. Pram run? Go by HR, not pace, and push two-handed.",[150,167],0,0,"15 min walk","","z2","150–167 bpm",1],["2027-01-13",11,"Wed","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,0,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2027-01-14",11,"Thu","Run-Easy","Easy run",40,"150-162, ceiling 167 (Z2)","40 min easy, flat route","40 min easy, flat route. Check cadence twice: count steps for 20 s and multiply by 3.",[150,167],0,0,"15 min walk","","z2","150–167 bpm",1],["2027-01-15",11,"Fri","Cross/Walk","Rest or light walk",0,"","Rest, or an easy walk. No running","Rest, or a 20-40 min walk (pram-friendly). No running. This day protects Saturday.",null,0,0,"","","rest","Rest or walk",0],["2027-01-16",11,"Sat","Run-Long","Long run",60,"Start 145-155, hard cap 165","60 min continuous, conversational","60 min continuous, conversational. CHECK THE RULE before you start: no more than ~10% over your longest run of the last 30 days. DECOUPLING RE-TEST (a Gate 1 input): same route and conditions as week 6. FUEL: 30-60 g carbohydrate per hour from 45 min. Start practising now, not in April.",[145,165],0,0,"15 min walk","","z2","145–165 bpm",1],["2027-01-17",11,"Sun","Run-Easy","Recovery run (HRV-gated)",24,"133-150 (Z1)","24 min very easy","24 min very easy, the gentlest run of the week. Rolling HRV below your band, or hip on waking at 3/10 or more? Walk instead. This is the first session to bin, never the long run.",[133,150],0,0,"15 min walk","","z1","133–150 bpm",1],["2027-01-18",12,"Mon","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,1,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2027-01-19",12,"Tue","Run-Easy","Easy run",30,"150-162, ceiling 167 (Z2)","30 min easy, flat route","30 min easy, flat route. Metronome 165-170 spm. Pram run? Go by HR, not pace, and push two-handed.",[150,167],0,1,"15 min walk","","z2","150–167 bpm",1],["2027-01-20",12,"Wed","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,1,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2027-01-21",12,"Thu","Run-Easy","Easy run",30,"150-162, ceiling 167 (Z2)","30 min easy, flat route","30 min easy, flat route. Check cadence twice: count steps for 20 s and multiply by 3.",[150,167],0,1,"15 min walk","","z2","150–167 bpm",1],["2027-01-22",12,"Fri","Cross/Walk","Rest or light walk",0,"","Rest, or an easy walk. No running","Rest, or a 20-40 min walk (pram-friendly). No running. This day protects Saturday.",null,0,1,"","","rest","Rest or walk",0],["2027-01-23",12,"Sat","Test/Race","GATE 1 - controlled parkrun",50,"Held at 168-175 - controlled","parkrun at HR 168–175, controlled, not a race","Not a race. 15 min easy warm-up, then parkrun with HR held at 168-175 the whole way - pace is whatever that HR gives you. 10 min easy cool-down. Log the time: it is your reference pace for sub-threshold work. Then check the Gate 1 criteria in the Guide before Tuesday.",[168,175],0,1,"","","race","Gate",0],["2027-01-24",12,"Sun","Run-Easy","Recovery run (HRV-gated)",20,"133-150 (Z1)","20 min very easy","20 min very easy, the gentlest run of the week. Rolling HRV below your band, or hip on waking at 3/10 or more? Walk instead. This is the first session to bin, never the long run.",[133,150],0,1,"15 min walk","","z1","133–150 bpm",1],["2027-01-25",13,"Mon","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,0,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2027-01-26",13,"Tue","Run-Quality","Sub-threshold 3 x 6 min",46,"168-178 in the reps (low Z3)","3 × 6 min at 168–178 bpm, 46 min in all","Sub-threshold: 15 min easy, then 3 x 6 min with 90 s easy jog between, then 10 min easy. HR 168-178 in the reps - judge it in the second half of each rep, because HR lags. Pace is whatever that HR gives you; the Gate 1 parkrun is your reference. Flat route. First faster running since the injury: if the hip goes past 3/10, stop the reps and jog home. GATED: only once Gate 1 has passed.",[168,178],0,0,"15 min walk","","z3","168–178 bpm",1],["2027-01-27",13,"Wed","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,0,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2027-01-28",13,"Thu","Run-Easy","Easy run",42,"150-162, ceiling 167 (Z2)","42 min easy, flat route","42 min easy, flat route. Check cadence twice: count steps for 20 s and multiply by 3.",[150,167],0,0,"15 min walk","","z2","150–167 bpm",1],["2027-01-29",13,"Fri","Cross/Walk","Rest or light walk",0,"","Rest, or an easy walk. No running","Rest, or a 20-40 min walk (pram-friendly). No running. This day protects Saturday.",null,0,0,"","","rest","Rest or walk",0],["2027-01-30",13,"Sat","Run-Long","Long run",66,"Start 145-155, hard cap 165","66 min continuous, conversational","66 min continuous, conversational. CHECK THE RULE before you start: no more than ~10% over your longest run of the last 30 days. FUEL: 30-60 g carbohydrate per hour from 45 min. Start practising now, not in April.",[145,165],0,0,"15 min walk","","z2","145–165 bpm",1],["2027-01-31",13,"Sun","Run-Easy","Recovery run (HRV-gated)",25,"133-150 (Z1)","25 min very easy","25 min very easy, the gentlest run of the week. Rolling HRV below your band, or hip on waking at 3/10 or more? Walk instead. This is the first session to bin, never the long run.",[133,150],0,0,"15 min walk","","z1","133–150 bpm",1],["2027-02-01",14,"Mon","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,0,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2027-02-02",14,"Tue","Run-Quality","Sub-threshold 4 x 6 min",54,"168-178 in the reps (low Z3)","4 × 6 min at 168–178 bpm, 54 min in all","Sub-threshold: 15 min easy, then 4 x 6 min with 90 s easy jog between, then 10 min easy. HR 168-178 in the reps - judge it in the second half of each rep, because HR lags. Pace is whatever that HR gives you; the Gate 1 parkrun is your reference. Flat route. GATED: only once Gate 1 has passed.",[168,178],0,0,"15 min walk","","z3","168–178 bpm",1],["2027-02-03",14,"Wed","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,0,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2027-02-04",14,"Thu","Run-Easy","Easy run + strides",44,"Z2 for the run; strides unmeasured","44 min easy + 4–6 × 20 s strides","44 min easy + 4-6 x 20 s strides on flat ground, walk back between each. Relaxed and quick, about 5K effort - not sprints. Skip the strides if the hip has hit 3/10 this week. First strides since the injury: start with 4.",[150,167],0,0,"15 min walk","","z2","150–167 bpm",1],["2027-02-05",14,"Fri","Cross/Walk","Rest or light walk",0,"","Rest, or an easy walk. No running","Rest, or a 20-40 min walk (pram-friendly). No running. This day protects Saturday.",null,0,0,"","","rest","Rest or walk",0],["2027-02-06",14,"Sat","Run-Long","Long run",72,"Start 145-155, hard cap 165","72 min continuous, conversational","72 min continuous, conversational. CHECK THE RULE before you start: no more than ~10% over your longest run of the last 30 days. FUEL: 30-60 g carbohydrate per hour from 45 min. Start practising now, not in April.",[145,165],0,0,"15 min walk","","z2","145–165 bpm",1],["2027-02-07",14,"Sun","Run-Easy","Recovery run (HRV-gated)",26,"133-150 (Z1)","26 min very easy","26 min very easy, the gentlest run of the week. Rolling HRV below your band, or hip on waking at 3/10 or more? Walk instead. This is the first session to bin, never the long run.",[133,150],0,0,"15 min walk","","z1","133–150 bpm",1],["2027-02-08",15,"Mon","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,0,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2027-02-09",15,"Tue","Run-Quality","Sub-threshold 5 x 6 min",61,"168-178 in the reps (low Z3)","5 × 6 min at 168–178 bpm, 61 min in all","Sub-threshold: 15 min easy, then 5 x 6 min with 90 s easy jog between, then 10 min easy. HR 168-178 in the reps - judge it in the second half of each rep, because HR lags. Pace is whatever that HR gives you; the Gate 1 parkrun is your reference. Flat route. GATED: only once Gate 1 has passed.",[168,178],0,0,"15 min walk","","z3","168–178 bpm",1],["2027-02-10",15,"Wed","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,0,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2027-02-11",15,"Thu","Run-Easy","Easy run + strides",46,"Z2 for the run; strides unmeasured","46 min easy + 4–6 × 20 s strides","46 min easy + 4-6 x 20 s strides on flat ground, walk back between each. Relaxed and quick, about 5K effort - not sprints. Skip the strides if the hip has hit 3/10 this week.",[150,167],0,0,"15 min walk","","z2","150–167 bpm",1],["2027-02-12",15,"Fri","Cross/Walk","Rest or light walk",0,"","Rest, or an easy walk. No running","Rest, or a 20-40 min walk (pram-friendly). No running. This day protects Saturday.",null,0,0,"","","rest","Rest or walk",0],["2027-02-13",15,"Sat","Run-Long","Long run",79,"Start 145-155, hard cap 165","79 min continuous, conversational","79 min continuous, conversational. CHECK THE RULE before you start: no more than ~10% over your longest run of the last 30 days. FUEL: 30-60 g carbohydrate per hour from 45 min. Start practising now, not in April.",[145,165],0,0,"15 min walk","","z2","145–165 bpm",1],["2027-02-14",15,"Sun","Run-Easy","Recovery run (HRV-gated)",28,"133-150 (Z1)","28 min very easy","28 min very easy, the gentlest run of the week. Rolling HRV below your band, or hip on waking at 3/10 or more? Walk instead. This is the first session to bin, never the long run.",[133,150],0,0,"15 min walk","","z1","133–150 bpm",1],["2027-02-15",16,"Mon","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,1,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2027-02-16",16,"Tue","Run-Easy","Easy run",35,"150-162, ceiling 167 (Z2)","35 min easy, flat route","35 min easy, flat route. Metronome 165-170 spm. Pram run? Go by HR, not pace, and push two-handed.",[150,167],0,1,"15 min walk","","z2","150–167 bpm",1],["2027-02-17",16,"Wed","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,1,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2027-02-18",16,"Thu","Run-Easy","Easy run + strides",35,"Z2 for the run; strides unmeasured","35 min easy + 4–6 × 20 s strides","35 min easy + 4-6 x 20 s strides on flat ground, walk back between each. Relaxed and quick, about 5K effort - not sprints. Skip the strides if the hip has hit 3/10 this week.",[150,167],0,1,"15 min walk","","z2","150–167 bpm",1],["2027-02-19",16,"Fri","Cross/Walk","Rest or light walk",0,"","Rest, or an easy walk. No running","Rest, or a 20-40 min walk (pram-friendly). No running. This day protects Saturday.",null,0,1,"","","rest","Rest or walk",0],["2027-02-20",16,"Sat","Test/Race","GATE 2 - parkrun",50,"All-out; should average near LTHR","parkrun, all-out only if the hip allows","ALL-OUT only if the hip has handled three weeks of sub-threshold and strides at 3/10 or less with no morning flare; otherwise repeat Gate 1's controlled version. 15 min warm-up, 10 min cool-down. An all-out 5K should average close to your LTHR - if yours lands far from 188, your zones need re-anchoring. Passing unlocks the 5th run day.",[182,197],0,1,"","","race","Gate",0],["2027-02-21",16,"Sun","Run-Easy","Recovery run (HRV-gated)",21,"133-150 (Z1)","21 min very easy","21 min very easy, the gentlest run of the week. Rolling HRV below your band, or hip on waking at 3/10 or more? Walk instead. This is the first session to bin, never the long run.",[133,150],0,1,"15 min walk","","z1","133–150 bpm",1],["2027-02-22",17,"Mon","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,0,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2027-02-23",17,"Tue","Run-Quality","Sub-threshold 4 x 8 min",63,"168-178 in the reps (low Z3)","4 × 8 min at 168–178 bpm, 63 min in all","Sub-threshold: 15 min easy, then 4 x 8 min with 2 min easy jog between, then 10 min easy. HR 168-178 in the reps - judge it in the second half of each rep, because HR lags. Pace is whatever that HR gives you; the Gate 1 parkrun is your reference. Flat route.",[168,178],0,0,"15 min walk","","z3","168–178 bpm",1],["2027-02-24",17,"Wed","Run-Easy","Easy run + physio routine",28,"133-150 (Z1)","28 min genuinely easy, physio routine later","28 min genuinely easy. 5th run day - added this week as the only change. Physio routine later the same day (3 x 8 each side, weaker side first). If the hip grumbles, this run is the first to go - back to 4 days without renegotiating.",[133,150],3,0,"15 min walk","","z1","133–150 bpm",1],["2027-02-25",17,"Thu","Run-Easy","Easy run + strides",46,"Z2 for the run; strides unmeasured","46 min easy + 4–6 × 20 s strides","46 min easy + 4-6 x 20 s strides on flat ground, walk back between each. Relaxed and quick, about 5K effort - not sprints. Skip the strides if the hip has hit 3/10 this week.",[150,167],0,0,"15 min walk","","z2","150–167 bpm",1],["2027-02-26",17,"Fri","Cross/Walk","Rest or light walk",0,"","Rest, or an easy walk. No running","Rest, or a 20-40 min walk (pram-friendly). No running. This day protects Saturday.",null,0,0,"","","rest","Rest or walk",0],["2027-02-27",17,"Sat","Run-Long","Long run",86,"Start 145-155, hard cap 165","86 min continuous, conversational","86 min continuous, conversational. CHECK THE RULE before you start: no more than ~10% over your longest run of the last 30 days. FUEL: 60-90 g carbohydrate per hour from 30 min, every 20 min after, with the exact product and bottle you will race with. Gut tolerance is trainable.",[145,165],0,0,"15 min walk","","z2","145–165 bpm",1],["2027-02-28",17,"Sun","Run-Easy","Recovery run (HRV-gated)",28,"133-150 (Z1)","28 min very easy","28 min very easy, the gentlest run of the week. Rolling HRV below your band, or hip on waking at 3/10 or more? Walk instead. This is the first session to bin, never the long run.",[133,150],0,0,"15 min walk","","z1","133–150 bpm",1],["2027-03-01",18,"Mon","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,0,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2027-03-02",18,"Tue","Run-Quality","Sub-threshold 3 x 10 min",59,"168-178 in the reps (low Z3)","3 × 10 min at 168–178 bpm, 59 min in all","Sub-threshold: 15 min easy, then 3 x 10 min with 2 min easy jog between, then 10 min easy. HR 168-178 in the reps - judge it in the second half of each rep, because HR lags. Pace is whatever that HR gives you; the Gate 1 parkrun is your reference. Flat route.",[168,178],0,0,"15 min walk","","z3","168–178 bpm",1],["2027-03-03",18,"Wed","Run-Easy","Easy run + physio routine",29,"133-150 (Z1)","29 min genuinely easy, physio routine later","29 min genuinely easy. Physio routine later the same day (3 x 8 each side, weaker side first). If the hip grumbles, this run is the first to go - back to 4 days without renegotiating.",[133,150],3,0,"15 min walk","","z1","133–150 bpm",1],["2027-03-04",18,"Thu","Run-Easy","Easy run + strides",48,"Z2 for the run; strides unmeasured","48 min easy + 4–6 × 20 s strides","48 min easy + 4-6 x 20 s strides on flat ground, walk back between each. Relaxed and quick, about 5K effort - not sprints. Skip the strides if the hip has hit 3/10 this week.",[150,167],0,0,"15 min walk","","z2","150–167 bpm",1],["2027-03-05",18,"Fri","Cross/Walk","Rest or light walk",0,"","Rest, or an easy walk. No running","Rest, or a 20-40 min walk (pram-friendly). No running. This day protects Saturday.",null,0,0,"","","rest","Rest or walk",0],["2027-03-06",18,"Sat","Run-Long","Long run",94,"Start 145-155, hard cap 165","94 min continuous, conversational","94 min continuous, conversational. CHECK THE RULE before you start: no more than ~10% over your longest run of the last 30 days. FUEL: 60-90 g carbohydrate per hour from 30 min, every 20 min after, with the exact product and bottle you will race with. Gut tolerance is trainable.",[145,165],0,0,"15 min walk","","z2","145–165 bpm",1],["2027-03-07",18,"Sun","Run-Easy","Recovery run (HRV-gated)",29,"133-150 (Z1)","29 min very easy","29 min very easy, the gentlest run of the week. Rolling HRV below your band, or hip on waking at 3/10 or more? Walk instead. This is the first session to bin, never the long run.",[133,150],0,0,"15 min walk","","z1","133–150 bpm",1],["2027-03-08",19,"Mon","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,0,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2027-03-09",19,"Tue","Run-Quality","Sub-threshold 5 x 6 min",61,"168-178 in the reps (low Z3)","5 × 6 min at 168–178 bpm, 61 min in all","Sub-threshold: 15 min easy, then 5 x 6 min with 90 s easy jog between, then 10 min easy. HR 168-178 in the reps - judge it in the second half of each rep, because HR lags. Pace is whatever that HR gives you; the Gate 1 parkrun is your reference. Flat route.",[168,178],0,0,"15 min walk","","z3","168–178 bpm",1],["2027-03-10",19,"Wed","Run-Easy","Easy run + physio routine",30,"133-150 (Z1)","30 min genuinely easy, physio routine later","30 min genuinely easy. Physio routine later the same day (3 x 8 each side, weaker side first). If the hip grumbles, this run is the first to go - back to 4 days without renegotiating.",[133,150],3,0,"15 min walk","","z1","133–150 bpm",1],["2027-03-11",19,"Thu","Run-Easy","Easy run + strides",50,"Z2 for the run; strides unmeasured","50 min easy + 4–6 × 20 s strides","50 min easy + 4-6 x 20 s strides on flat ground, walk back between each. Relaxed and quick, about 5K effort - not sprints. Skip the strides if the hip has hit 3/10 this week.",[150,167],0,0,"15 min walk","","z2","150–167 bpm",1],["2027-03-12",19,"Fri","Cross/Walk","Rest or light walk",0,"","Rest, or an easy walk. No running","Rest, or a 20-40 min walk (pram-friendly). No running. This day protects Saturday.",null,0,0,"","","rest","Rest or walk",0],["2027-03-13",19,"Sat","Run-Long","Long run",103,"Easy 145-160; MP segments 160-167","103 min continuous, conversational with a marathon-effort block","103 min continuous, conversational. CHECK THE RULE before you start: no more than ~10% over your longest run of the last 30 days. Final 20 min at marathon effort (HR 160-167). FUEL: 60-90 g carbohydrate per hour from 30 min, every 20 min after, with the exact product and bottle you will race with. Gut tolerance is trainable.",[145,167],0,0,"15 min walk","","z2","145–167 bpm",1],["2027-03-14",19,"Sun","Run-Easy","Recovery run (HRV-gated)",30,"133-150 (Z1)","30 min very easy","30 min very easy, the gentlest run of the week. Rolling HRV below your band, or hip on waking at 3/10 or more? Walk instead. This is the first session to bin, never the long run.",[133,150],0,0,"15 min walk","","z1","133–150 bpm",1],["2027-03-15",20,"Mon","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,0,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2027-03-16",20,"Tue","Run-Quality","Sub-threshold 4 x 8 min",63,"168-178 in the reps (low Z3)","4 × 8 min at 168–178 bpm, 63 min in all","Sub-threshold: 15 min easy, then 4 x 8 min with 2 min easy jog between, then 10 min easy. HR 168-178 in the reps - judge it in the second half of each rep, because HR lags. Pace is whatever that HR gives you; the Gate 1 parkrun is your reference. Flat route.",[168,178],0,0,"15 min walk","","z3","168–178 bpm",1],["2027-03-17",20,"Wed","Run-Easy","Easy run + physio routine",30,"133-150 (Z1)","30 min genuinely easy, physio routine later","30 min genuinely easy. Physio routine later the same day (3 x 8 each side, weaker side first). If the hip grumbles, this run is the first to go - back to 4 days without renegotiating.",[133,150],3,0,"15 min walk","","z1","133–150 bpm",1],["2027-03-18",20,"Thu","Run-Easy","Easy run + strides",50,"Z2 for the run; strides unmeasured","50 min easy + 4–6 × 20 s strides","50 min easy + 4-6 x 20 s strides on flat ground, walk back between each. Relaxed and quick, about 5K effort - not sprints. Skip the strides if the hip has hit 3/10 this week.",[150,167],0,0,"15 min walk","","z2","150–167 bpm",1],["2027-03-19",20,"Fri","Cross/Walk","Rest or light walk",0,"","Rest, or an easy walk. No running","Rest, or a 20-40 min walk (pram-friendly). No running. This day protects Saturday.",null,0,0,"","","rest","Rest or walk",0],["2027-03-20",20,"Sat","Run-Long","Long run",112,"Easy 145-160; MP segments 160-167","112 min continuous, conversational with a marathon-effort block","112 min continuous, conversational. CHECK THE RULE before you start: no more than ~10% over your longest run of the last 30 days. Final 25 min at marathon effort (HR 160-167). FUEL: 60-90 g carbohydrate per hour from 30 min, every 20 min after, with the exact product and bottle you will race with. Gut tolerance is trainable.",[145,167],0,0,"15 min walk","","z2","145–167 bpm",1],["2027-03-21",20,"Sun","Run-Easy","Recovery run (HRV-gated)",30,"133-150 (Z1)","30 min very easy","30 min very easy, the gentlest run of the week. Rolling HRV below your band, or hip on waking at 3/10 or more? Walk instead. This is the first session to bin, never the long run.",[133,150],0,0,"15 min walk","","z1","133–150 bpm",1],["2027-03-22",21,"Mon","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,1,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2027-03-23",21,"Tue","Run-Quality","Sub-threshold 3 x 6 min",46,"168-178 in the reps (low Z3)","3 × 6 min at 168–178 bpm, 46 min in all","Sub-threshold: 15 min easy, then 3 x 6 min with 90 s easy jog between, then 10 min easy. HR 168-178 in the reps - judge it in the second half of each rep, because HR lags. Pace is whatever that HR gives you; the Gate 1 parkrun is your reference. Flat route.",[168,178],0,1,"15 min walk","","z3","168–178 bpm",1],["2027-03-24",21,"Wed","Run-Easy","Easy run + physio routine",25,"133-150 (Z1)","25 min genuinely easy, physio routine later","25 min genuinely easy. Physio routine later the same day (3 x 8 each side, weaker side first). If the hip grumbles, this run is the first to go - back to 4 days without renegotiating.",[133,150],3,1,"15 min walk","","z1","133–150 bpm",1],["2027-03-25",21,"Thu","Run-Easy","Easy run + strides",38,"Z2 for the run; strides unmeasured","38 min easy + 4–6 × 20 s strides","38 min easy + 4-6 x 20 s strides on flat ground, walk back between each. Relaxed and quick, about 5K effort - not sprints. Skip the strides if the hip has hit 3/10 this week.",[150,167],0,1,"15 min walk","","z2","150–167 bpm",1],["2027-03-26",21,"Fri","Cross/Walk","Rest or light walk",0,"","Rest, or an easy walk. No running","Rest, or a 20-40 min walk (pram-friendly). No running. This day protects Saturday.",null,0,1,"","","rest","Rest or walk",0],["2027-03-27",21,"Sat","Run-Long","Long run",80,"Start 145-155, hard cap 165","80 min continuous, conversational","80 min continuous, conversational. CHECK THE RULE before you start: no more than ~10% over your longest run of the last 30 days. FUEL: 60-90 g carbohydrate per hour from 30 min, every 20 min after, with the exact product and bottle you will race with. Gut tolerance is trainable.",[145,165],0,1,"15 min walk","","z2","145–165 bpm",1],["2027-03-28",21,"Sun","Run-Easy","Recovery run (HRV-gated)",23,"133-150 (Z1)","23 min very easy","23 min very easy, the gentlest run of the week. Rolling HRV below your band, or hip on waking at 3/10 or more? Walk instead. This is the first session to bin, never the long run.",[133,150],0,1,"15 min walk","","z1","133–150 bpm",1],["2027-03-29",22,"Mon","Strength","Physio routine (light)",20,"","2 × 8 each side, four exercises (light)","Physio routine - 2 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,2,1,"1 set of each, both sides (~6 min)","","str","Physio · 2×8 each side",0],["2027-03-30",22,"Tue","Run-Easy","Easy + strides",30,"Z2 for the run; strides unmeasured","30 min easy + short relaxed strides","30 min easy + 4 x 20 s relaxed strides (only if strides have been hip-quiet).",[150,167],0,1,"15 min walk","","z2","150–167 bpm",1],["2027-03-31",22,"Wed","Run-Easy","Easy",30,"150-162, ceiling 167 (Z2)","30 min easy, flat route","30 min easy.",[150,167],0,1,"15 min walk","","z2","150–167 bpm",1],["2027-04-01",22,"Thu","Run-Easy","Easy + strides",25,"Z2 for the run; strides unmeasured","25 min easy + short relaxed strides","25 min easy + 3 x 20 s strides.",[150,167],0,1,"15 min walk","","z2","150–167 bpm",1],["2027-04-02",22,"Fri","Rest","Rest",0,"","Full rest","Full rest.",null,0,1,"","","rest","Rest or walk",0],["2027-04-03",22,"Sat","Run-Easy","Shakeout",20,"133-150 (Z1)","20 min very easy, nothing more","20 min very easy.",[133,150],0,1,"15 min walk","","z1","133–150 bpm",1],["2027-04-04",22,"Sun","Test/Race","GATE 3 - HALF MARATHON",115,"Race effort, or MP 160-167 if not racing","Race it, or run it at marathon effort","Race it only if Gate 2 was all-out and the hip has stayed quiet since; otherwise run it at marathon effort (HR 160-167) as a supported long run. Race kit, race fuelling, race breakfast. The result picks your marathon tier (Guide). Sub-4 wants roughly 1:52-1:55, run evenly.",[160,186],0,1,"","","race","Gate",0],["2027-04-05",23,"Mon","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,1,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2027-04-06",23,"Tue","Run-Easy","Easy run",40,"150-162, ceiling 167 (Z2)","40 min easy, flat route","40 min easy, flat route. Metronome 165-170 spm. Pram run? Go by HR, not pace, and push two-handed.",[150,167],0,1,"15 min walk","","z2","150–167 bpm",1],["2027-04-07",23,"Wed","Run-Easy","Easy run + physio routine",25,"133-150 (Z1)","25 min genuinely easy, physio routine later","25 min genuinely easy. Physio routine later the same day (3 x 8 each side, weaker side first). If the hip grumbles, this run is the first to go - back to 4 days without renegotiating.",[133,150],3,1,"15 min walk","","z1","133–150 bpm",1],["2027-04-08",23,"Thu","Run-Easy","Easy run",40,"150-162, ceiling 167 (Z2)","40 min easy, flat route","40 min easy, flat route. Check cadence twice: count steps for 20 s and multiply by 3.",[150,167],0,1,"15 min walk","","z2","150–167 bpm",1],["2027-04-09",23,"Fri","Cross/Walk","Rest or light walk",0,"","Rest, or an easy walk. No running","Rest, or a 20-40 min walk (pram-friendly). No running. This day protects Saturday.",null,0,1,"","","rest","Rest or walk",0],["2027-04-10",23,"Sat","Run-Long","Long run",90,"Start 145-155, hard cap 165","90 min continuous, conversational","90 min continuous, conversational. CHECK THE RULE before you start: no more than ~10% over your longest run of the last 30 days. DECOUPLING RE-TEST: confirms the base survived the half. No marathon-effort work today. FUEL: 60-90 g carbohydrate per hour from 30 min, every 20 min after, with the exact product and bottle you will race with. Gut tolerance is trainable.",[145,165],0,1,"15 min walk","","z2","145–165 bpm",1],["2027-04-11",23,"Sun","Run-Easy","Recovery run (HRV-gated)",24,"133-150 (Z1)","24 min very easy","24 min very easy, the gentlest run of the week. Rolling HRV below your band, or hip on waking at 3/10 or more? Walk instead. This is the first session to bin, never the long run.",[133,150],0,1,"15 min walk","","z1","133–150 bpm",1],["2027-04-12",24,"Mon","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,0,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2027-04-13",24,"Tue","Run-Quality","Sub-threshold 4 x 8 min",63,"168-178 in the reps (low Z3)","4 × 8 min at 168–178 bpm, 63 min in all","Sub-threshold: 15 min easy, then 4 x 8 min with 2 min easy jog between, then 10 min easy. HR 168-178 in the reps - judge it in the second half of each rep, because HR lags. Pace is whatever that HR gives you; the Gate 1 parkrun is your reference. Flat route.",[168,178],0,0,"15 min walk","","z3","168–178 bpm",1],["2027-04-14",24,"Wed","Run-Easy","Easy run + physio routine",30,"133-150 (Z1)","30 min genuinely easy, physio routine later","30 min genuinely easy. Physio routine later the same day (3 x 8 each side, weaker side first). If the hip grumbles, this run is the first to go - back to 4 days without renegotiating.",[133,150],3,0,"15 min walk","","z1","133–150 bpm",1],["2027-04-15",24,"Thu","Run-Easy","Easy run + strides",50,"Z2 for the run; strides unmeasured","50 min easy + 4–6 × 20 s strides","50 min easy + 4-6 x 20 s strides on flat ground, walk back between each. Relaxed and quick, about 5K effort - not sprints. Skip the strides if the hip has hit 3/10 this week.",[150,167],0,0,"15 min walk","","z2","150–167 bpm",1],["2027-04-16",24,"Fri","Cross/Walk","Rest or light walk",0,"","Rest, or an easy walk. No running","Rest, or a 20-40 min walk (pram-friendly). No running. This day protects Saturday.",null,0,0,"","","rest","Rest or walk",0],["2027-04-17",24,"Sat","Run-Long","Long run",122,"Easy 145-160; MP segments 160-167","122 min continuous, conversational with a marathon-effort block","122 min continuous, conversational. CHECK THE RULE before you start: no more than ~10% over your longest run of the last 30 days. 2 x 15 min at marathon effort in the back half, 5 min easy between. If you can, run it on the course: the coast road from Musselburgh towards Gosford is a short run from home, and its exposure is the race's biggest variable. FUEL: 60-90 g carbohydrate per hour from 30 min, every 20 min after, with the exact product and bottle you will race with. Gut tolerance is trainable.",[145,167],0,0,"15 min walk","","z2","145–167 bpm",1],["2027-04-18",24,"Sun","Run-Easy","Recovery run (HRV-gated)",32,"133-150 (Z1)","32 min very easy","32 min very easy, the gentlest run of the week. Tired legs are the point here - this is marathon-specific, not junk. Rolling HRV below your band, or hip on waking at 3/10 or more? Walk instead. This is the first session to bin, never the long run.",[133,150],0,0,"15 min walk","","z1","133–150 bpm",1],["2027-04-19",25,"Mon","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,0,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2027-04-20",25,"Tue","Run-Quality","Sub-threshold 3 x 10 min",59,"168-178 in the reps (low Z3)","3 × 10 min at 168–178 bpm, 59 min in all","Sub-threshold: 15 min easy, then 3 x 10 min with 2 min easy jog between, then 10 min easy. HR 168-178 in the reps - judge it in the second half of each rep, because HR lags. Pace is whatever that HR gives you; the Gate 1 parkrun is your reference. Flat route.",[168,178],0,0,"15 min walk","","z3","168–178 bpm",1],["2027-04-21",25,"Wed","Run-Easy","Easy run + physio routine",31,"133-150 (Z1)","31 min genuinely easy, physio routine later","31 min genuinely easy. Physio routine later the same day (3 x 8 each side, weaker side first). If the hip grumbles, this run is the first to go - back to 4 days without renegotiating.",[133,150],3,0,"15 min walk","","z1","133–150 bpm",1],["2027-04-22",25,"Thu","Run-Easy","Easy run + strides",52,"Z2 for the run; strides unmeasured","52 min easy + 4–6 × 20 s strides","52 min easy + 4-6 x 20 s strides on flat ground, walk back between each. Relaxed and quick, about 5K effort - not sprints. Skip the strides if the hip has hit 3/10 this week.",[150,167],0,0,"15 min walk","","z2","150–167 bpm",1],["2027-04-23",25,"Fri","Cross/Walk","Rest or light walk",0,"","Rest, or an easy walk. No running","Rest, or a 20-40 min walk (pram-friendly). No running. This day protects Saturday.",null,0,0,"","","rest","Rest or walk",0],["2027-04-24",25,"Sat","Run-Long","Long run",134,"Easy 145-160; MP segments 160-167","134 min continuous, conversational with a marathon-effort block","134 min continuous, conversational. CHECK THE RULE before you start: no more than ~10% over your longest run of the last 30 days. 2 x 20 min at marathon effort in the back half, 5 min easy between. If you can, run it on the course: the coast road from Musselburgh towards Gosford is a short run from home, and its exposure is the race's biggest variable. FUEL: 60-90 g carbohydrate per hour from 30 min, every 20 min after, with the exact product and bottle you will race with. Gut tolerance is trainable.",[145,167],0,0,"15 min walk","","z2","145–167 bpm",1],["2027-04-25",25,"Sun","Run-Easy","Recovery run (HRV-gated)",34,"133-150 (Z1)","34 min very easy","34 min very easy, the gentlest run of the week. Tired legs are the point here - this is marathon-specific, not junk. Rolling HRV below your band, or hip on waking at 3/10 or more? Walk instead. This is the first session to bin, never the long run.",[133,150],0,0,"15 min walk","","z1","133–150 bpm",1],["2027-04-26",26,"Mon","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,0,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2027-04-27",26,"Tue","Run-Quality","Sub-threshold 4 x 8 min",63,"168-178 in the reps (low Z3)","4 × 8 min at 168–178 bpm, 63 min in all","Sub-threshold: 15 min easy, then 4 x 8 min with 2 min easy jog between, then 10 min easy. HR 168-178 in the reps - judge it in the second half of each rep, because HR lags. Pace is whatever that HR gives you; the Gate 1 parkrun is your reference. Flat route.",[168,178],0,0,"15 min walk","","z3","168–178 bpm",1],["2027-04-28",26,"Wed","Run-Easy","Easy run + physio routine",33,"133-150 (Z1)","33 min genuinely easy, physio routine later","33 min genuinely easy. Physio routine later the same day (3 x 8 each side, weaker side first). If the hip grumbles, this run is the first to go - back to 4 days without renegotiating.",[133,150],3,0,"15 min walk","HEAT ACCLIMATION week 1: 4 post-run hot baths this week (Guide).","z1","133–150 bpm",1],["2027-04-29",26,"Thu","Run-Easy","Easy run + strides",55,"Z2 for the run; strides unmeasured","55 min easy + 4–6 × 20 s strides","55 min easy + 4-6 x 20 s strides on flat ground, walk back between each. Relaxed and quick, about 5K effort - not sprints. Skip the strides if the hip has hit 3/10 this week.",[150,167],0,0,"15 min walk","","z2","150–167 bpm",1],["2027-04-30",26,"Fri","Cross/Walk","Rest or light walk",0,"","Rest, or an easy walk. No running","Rest, or a 20-40 min walk (pram-friendly). No running. This day protects Saturday.",null,0,0,"","","rest","Rest or walk",0],["2027-05-01",26,"Sat","Run-Long","Long run",146,"Easy 145-160; MP segments 160-167","146 min continuous, conversational with a marathon-effort block","146 min continuous, conversational. CHECK THE RULE before you start: no more than ~10% over your longest run of the last 30 days. 3 x 15 min at marathon effort, the last block deep into the run. If you can, run it on the course: the coast road from Musselburgh towards Gosford is a short run from home, and its exposure is the race's biggest variable. FUEL: 60-90 g carbohydrate per hour from 30 min, every 20 min after, with the exact product and bottle you will race with. Gut tolerance is trainable.",[145,167],0,0,"15 min walk","HEAT ACCLIMATION week 1: 4 post-run hot baths this week (Guide).","z2","145–167 bpm",1],["2027-05-02",26,"Sun","Run-Easy","Recovery run (HRV-gated)",36,"133-150 (Z1)","36 min very easy","36 min very easy, the gentlest run of the week. Tired legs are the point here - this is marathon-specific, not junk. Rolling HRV below your band, or hip on waking at 3/10 or more? Walk instead. This is the first session to bin, never the long run.",[133,150],0,0,"15 min walk","HEAT ACCLIMATION week 1: 4 post-run hot baths this week (Guide).","z1","133–150 bpm",1],["2027-05-03",27,"Mon","Strength","Physio routine",25,"","3 × 8 each side, four exercises","Physio routine - 3 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,3,0,"1 set of each, both sides (~6 min)","","str","Physio · 3×8 each side",0],["2027-05-04",27,"Tue","Run-Quality","Sub-threshold 3 x 10 min",59,"168-178 in the reps (low Z3)","3 × 10 min at 168–178 bpm, 59 min in all","Sub-threshold: 15 min easy, then 3 x 10 min with 2 min easy jog between, then 10 min easy. HR 168-178 in the reps - judge it in the second half of each rep, because HR lags. Pace is whatever that HR gives you; the Gate 1 parkrun is your reference. Flat route.",[168,178],0,0,"15 min walk","","z3","168–178 bpm",1],["2027-05-05",27,"Wed","Run-Easy","Easy run + physio routine",33,"133-150 (Z1)","33 min genuinely easy, physio routine later","33 min genuinely easy. Physio routine later the same day (3 x 8 each side, weaker side first). If the hip grumbles, this run is the first to go - back to 4 days without renegotiating.",[133,150],3,0,"15 min walk","HEAT ACCLIMATION week 2: 4-5 post-run hot baths this week, but not after Saturday's peak run.","z1","133–150 bpm",1],["2027-05-06",27,"Thu","Run-Easy","Easy run + strides",55,"Z2 for the run; strides unmeasured","55 min easy + 4–6 × 20 s strides","55 min easy + 4-6 x 20 s strides on flat ground, walk back between each. Relaxed and quick, about 5K effort - not sprints. Skip the strides if the hip has hit 3/10 this week.",[150,167],0,0,"15 min walk","","z2","150–167 bpm",1],["2027-05-07",27,"Fri","Cross/Walk","Rest or light walk",0,"","Rest, or an easy walk. No running","Rest, or a 20-40 min walk (pram-friendly). No running. This day protects Saturday.",null,0,0,"","","rest","Rest or walk",0],["2027-05-08",27,"Sat","Run-Long","Long run",160,"Easy 145-160; MP segments 160-167","160 min continuous, conversational with a marathon-effort block","160 min continuous, conversational. CHECK THE RULE before you start: no more than ~10% over your longest run of the last 30 days. PEAK. Final 40 min continuous at marathon effort. Full dress rehearsal: race shoes, kit, fuel and a 10:00 start. If something is going to fail, it fails today, three weeks out, not on 30 May. If you can, run it on the course: the coast road from Musselburgh towards Gosford is a short run from home, and its exposure is the race's biggest variable. FUEL: 60-90 g carbohydrate per hour from 30 min, every 20 min after, with the exact product and bottle you will race with. Gut tolerance is trainable.",[145,167],0,0,"15 min walk","HEAT ACCLIMATION week 2: 4-5 post-run hot baths this week, but not after Saturday's peak run.","z2","145–167 bpm",1],["2027-05-09",27,"Sun","Run-Easy","Recovery run (HRV-gated)",36,"133-150 (Z1)","36 min very easy","36 min very easy, the gentlest run of the week. Tired legs are the point here - this is marathon-specific, not junk. Rolling HRV below your band, or hip on waking at 3/10 or more? Walk instead. This is the first session to bin, never the long run.",[133,150],0,0,"15 min walk","HEAT ACCLIMATION week 2: 4-5 post-run hot baths this week, but not after Saturday's peak run.","z1","133–150 bpm",1],["2027-05-10",28,"Mon","Strength","Physio routine",20,"","2 × 8 each side, four exercises (light)","Physio routine - 2 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,2,1,"1 set of each, both sides (~6 min)","","str","Physio · 2×8 each side",0],["2027-05-11",28,"Tue","Run-Quality","Sub-threshold 3 x 8 min",53,"168-178 in the reps (low Z3)","3 × 8 min at 168–178 bpm, 53 min in all","Sub-threshold: 15 min easy, then 3 x 8 min with 2 min easy jog between, then 10 min easy. HR 168-178 in the reps - judge it in the second half of each rep, because HR lags. Pace is whatever that HR gives you; the Gate 1 parkrun is your reference. Flat route.",[168,178],0,1,"15 min walk","","z3","168–178 bpm",1],["2027-05-12",28,"Wed","Run-Easy","Easy run + physio routine",27,"133-150 (Z1)","27 min genuinely easy, physio routine later","27 min genuinely easy. Physio routine later the same day (2 x 8 each side, weaker side first). If the hip grumbles, this run is the first to go - back to 4 days without renegotiating.",[133,150],2,1,"15 min walk","HEAT maintenance: one post-run hot bath every ~3 days. Adaptation fades ~2.5% a day.","z1","133–150 bpm",1],["2027-05-13",28,"Thu","Run-Easy","Easy run + strides",45,"Z2 for the run; strides unmeasured","45 min easy + 4–6 × 20 s strides","45 min easy + 4-6 x 20 s strides on flat ground, walk back between each. Relaxed and quick, about 5K effort - not sprints. Skip the strides if the hip has hit 3/10 this week.",[150,167],0,1,"15 min walk","","z2","150–167 bpm",1],["2027-05-14",28,"Fri","Cross/Walk","Rest or light walk",0,"","Rest, or an easy walk. No running","Rest, or a 20-40 min walk (pram-friendly). No running. This day protects Saturday.",null,0,1,"","","rest","Rest or walk",0],["2027-05-15",28,"Sat","Run-Long","Long run",115,"Easy 145-160; MP segments 160-167","115 min continuous, conversational with a marathon-effort block","115 min continuous, conversational. CHECK THE RULE before you start: no more than ~10% over your longest run of the last 30 days. Final 20 min at marathon effort. FUEL: 60-90 g carbohydrate per hour from 30 min, every 20 min after, with the exact product and bottle you will race with. Gut tolerance is trainable.",[145,167],0,1,"15 min walk","HEAT maintenance: one post-run hot bath every ~3 days. Adaptation fades ~2.5% a day.","z2","145–167 bpm",1],["2027-05-16",28,"Sun","Run-Easy","Recovery run (HRV-gated)",29,"133-150 (Z1)","29 min very easy","29 min very easy, the gentlest run of the week. Tired legs are the point here - this is marathon-specific, not junk. Rolling HRV below your band, or hip on waking at 3/10 or more? Walk instead. This is the first session to bin, never the long run.",[133,150],0,1,"15 min walk","HEAT maintenance: one post-run hot bath every ~3 days. Adaptation fades ~2.5% a day.","z1","133–150 bpm",1],["2027-05-17",29,"Mon","Strength","Physio routine",20,"","2 × 8 each side, four exercises (light)","Physio routine - 2 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first.",null,2,1,"1 set of each, both sides (~6 min)","","str","Physio · 2×8 each side",0],["2027-05-18",29,"Tue","Run-Quality","Sub-threshold 3 x 6 min",46,"168-178 in the reps (low Z3)","3 × 6 min at 168–178 bpm, 46 min in all","Sub-threshold: 15 min easy, then 3 x 6 min with 90 s easy jog between, then 10 min easy. HR 168-178 in the reps - judge it in the second half of each rep, because HR lags. Pace is whatever that HR gives you; the Gate 1 parkrun is your reference. Flat route.",[168,178],0,1,"15 min walk","","z3","168–178 bpm",1],["2027-05-19",29,"Wed","Run-Easy","Easy run + physio routine",25,"133-150 (Z1)","25 min genuinely easy, physio routine later","25 min genuinely easy. Physio routine later the same day (2 x 8 each side, weaker side first). If the hip grumbles, this run is the first to go - back to 4 days without renegotiating.",[133,150],2,1,"15 min walk","HEAT maintenance: one post-run hot bath every ~3 days.","z1","133–150 bpm",1],["2027-05-20",29,"Thu","Run-Easy","Easy run + strides",35,"Z2 for the run; strides unmeasured","35 min easy + 4–6 × 20 s strides","35 min easy + 4-6 x 20 s strides on flat ground, walk back between each. Relaxed and quick, about 5K effort - not sprints. Skip the strides if the hip has hit 3/10 this week.",[150,167],0,1,"15 min walk","","z2","150–167 bpm",1],["2027-05-21",29,"Fri","Cross/Walk","Rest or light walk",0,"","Rest, or an easy walk. No running","Rest, or a 20-40 min walk (pram-friendly). No running. This day protects Saturday.",null,0,1,"","","rest","Rest or walk",0],["2027-05-22",29,"Sat","Run-Long","Long run",80,"Easy 145-160; MP segments 160-167","80 min continuous, conversational with a marathon-effort block","80 min continuous, conversational. CHECK THE RULE before you start: no more than ~10% over your longest run of the last 30 days. 2 x 10 min at marathon effort. FUEL: 60-90 g carbohydrate per hour from 30 min, every 20 min after, with the exact product and bottle you will race with. Gut tolerance is trainable.",[145,167],0,1,"15 min walk","HEAT maintenance: one post-run hot bath every ~3 days.","z2","145–167 bpm",1],["2027-05-23",29,"Sun","Run-Easy","Recovery run (HRV-gated)",23,"133-150 (Z1)","23 min very easy","23 min very easy, the gentlest run of the week. Tired legs are the point here - this is marathon-specific, not junk. Rolling HRV below your band, or hip on waking at 3/10 or more? Walk instead. This is the first session to bin, never the long run.",[133,150],0,1,"15 min walk","HEAT maintenance: one post-run hot bath every ~3 days.","z1","133–150 bpm",1],["2027-05-24",30,"Mon","Strength","Physio routine (light)",12,"","1 × 8 each side, four exercises (light)","Physio routine - 1 x 8 each side: 1) Bulgarian split squat 2) Single-leg calf raise 3) Single-leg glute bridge 4) Standing ab twist. Load, tempo and progression exactly as your physio set them. Lead every set with your weaker side, then match the reps on the other side, and log the effort for each side - that gap shows whether the weaker side is catching up. 5 min brisk walk first. Race week: one easy set of each.",null,1,1,"1 set of each, both sides (~6 min)","","str","Physio · 1×8 each side",0],["2027-05-25",30,"Tue","Run-Easy","Easy + strides",30,"Z2 for the run; strides unmeasured","30 min easy + short relaxed strides","30 min easy + 4 x 15 s relaxed strides.",[150,167],0,1,"15 min walk","","z2","150–167 bpm",1],["2027-05-26",30,"Wed","Run-Easy","Easy",25,"133-150 (Z1)","25 min easy, flat route","25 min easy. Nothing more. HEAT maintenance: last hot bath on Wednesday or Thursday, not race eve.",[133,150],0,1,"15 min walk","","z1","133–150 bpm",1],["2027-05-27",30,"Thu","Run-Easy","Easy + strides",20,"Z2 for the run; strides unmeasured","20 min easy + short relaxed strides","20 min easy + 3 x 15 s strides. Rehearse race-morning breakfast and kit.",[150,167],0,1,"15 min walk","","z2","150–167 bpm",1],["2027-05-28",30,"Fri","Rest","Rest",0,"","Full rest","Full rest. Kit laid out. Nothing new. Carbohydrate up.",null,0,1,"","","rest","Rest or walk",0],["2027-05-29",30,"Sat","Run-Easy","Shakeout",18,"133-150 (Z1)","18 min very easy, nothing more","15-20 min very easy. Resist doing more.",[133,150],0,1,"15 min walk","","z1","133–150 bpm",1],["2027-05-30",30,"Sun","Test/Race","EDINBURGH MARATHON",240,"Race: by your Gate 3 tier","10:00 start. Pace from your Gate 3 tier","10:00 start. Check the forecast and choose your heat-adjusted target at breakfast (Guide), never at 30 km. Pace from your Gate 3 tier. The first 10 km must feel too easy. Fuel from 30 min, sodium in every bottle.",[155,172],0,1,"","","race","Race day",0]],"blocks":{"1":"Return to run","2":"Return to run","3":"Return to run","4":"Return to run","5":"Base","6":"Base","7":"Base","8":"Base","9":"Base","10":"Base","11":"Base","12":"Base","13":"Build","14":"Build","15":"Build","16":"Build","17":"Build","18":"Build","19":"Build","20":"Half tune-up","21":"Half tune-up","22":"Half tune-up","23":"Marathon","24":"Marathon","25":"Marathon","26":"Marathon","27":"Marathon","28":"Taper","29":"Taper","30":"Taper"},"start":"2026-11-02","race":"2027-05-30","hm":"2027-04-04","weeks":30};
+const APP_VERSION = "1.0.0";
+const SCHEMA = 1;
+const APP_ID = "edinburgh-2027";
+const DB_NAME = "edinburgh2027-log";
+const EX = [["bss", "Bulgarian split squat"], ["calf", "Single-leg calf raise"], ["bridge", "Single-leg glute bridge"], ["twist", "Standing ab twist"]];
+const RUN_TYPES = ["Run-Easy", "Run-Long", "Run-Quality", "Test/Race"];
+const TYPES = [["Run-Easy", "Easy run"], ["Run-Long", "Long run"], ["Run-Quality", "Quality run"], ["Test/Race", "Race or test"],
+  ["Strength", "Physio / strength"], ["Cross/Walk", "Walk or cross-training"], ["Rest", "Rest"]];
+const TYPE_LABEL = Object.fromEntries(TYPES);
+const LO = 130, HI = 207, LTHR = 188;
+const ZONES = [["z1", 133, 150], ["z2", 150, 167], ["z3", 167, 197], ["race", 197, 207]];
+
+const DAYS = PLAN.days.map(a => ({d: a[0], w: a[1], dow: a[2], typ: a[3], title: a[4], min: a[5], hr: a[6], lead: a[7], body: a[8],
+  band: a[9], physio: a[10], down: a[11], mvs: a[12], heat: a[13], tone: a[14], short: a[15], run: a[16]}));
+const P = {};
+DAYS.forEach((x, i) => { x.i = i; P[x.d] = x; });
+const FIRST = DAYS[0].d, LAST = DAYS[DAYS.length - 1].d;
+
+/* ---------- utilities ---------- */
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2, "0");
+function todayISO() { const t = new Date(); return t.getFullYear() + "-" + pad(t.getMonth() + 1) + "-" + pad(t.getDate()); }
+function isoAdd(iso, n) { const d = new Date(iso + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
+function dayDiff(a, b) { return Math.round((new Date(a + "T12:00:00Z") - new Date(b + "T12:00:00Z")) / 864e5); }
+function fmt(iso, o) { return new Date(iso + "T12:00:00Z").toLocaleDateString("en-GB", Object.assign({timeZone: "UTC"}, o)); }
+function clampISO(iso) { return iso < FIRST ? FIRST : (iso > LAST ? LAST : iso); }
+function num(v) { if (v === null || v === undefined || v === "") return null; const n = typeof v === "number" ? v : parseFloat(String(v).replace(",", ".")); return isFinite(n) ? n : null; }
+function mean(a) { return a.reduce((s, x) => s + x, 0) / a.length; }
+function stdev(a) { if (a.length < 2) return 0; const m = mean(a); return Math.sqrt(a.reduce((s, x) => s + (x - m) * (x - m), 0) / (a.length - 1)); }
+function r1(x) { return Math.round(x * 10) / 10; }
+function pct(v) { return ((v - LO) / (HI - LO) * 100); }
+function el(tag, attrs, ...kids) {
+  const e = document.createElement(tag);
+  if (attrs) for (const k in attrs) {
+    const v = attrs[k];
+    if (v === null || v === undefined || v === false) continue;
+    if (k === "class") e.className = v;
+    else if (k === "text") e.textContent = v;
+    else if (k.slice(0, 2) === "on") e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v === true ? "" : v);
+  }
+  for (const c of kids.flat()) { if (c === null || c === undefined || c === false) continue; e.append(c.nodeType ? c : document.createTextNode(String(c))); }
+  return e;
+}
+function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove("on"), 2200); }
+
+/* ---------- storage: IndexedDB, localStorage fallback ---------- */
+const store = {
+  mode: "IndexedDB", db: null,
+  async init() {
+    if (!("indexedDB" in window)) { this.mode = "localStorage"; return; }
+    try {
+      this.db = await new Promise((res, rej) => {
+        const r = indexedDB.open(DB_NAME, 1);
+        r.onupgradeneeded = () => r.result.createObjectStore("kv");
+        r.onsuccess = () => res(r.result);
+        r.onerror = () => rej(r.error);
+        r.onblocked = () => rej(new Error("blocked"));
+      });
+    } catch (e) { this.mode = "localStorage"; }
+  },
+  async get(k) {
+    if (this.mode === "localStorage") { try { const v = localStorage.getItem(DB_NAME + ":" + k); return v ? JSON.parse(v) : undefined; } catch (e) { return undefined; } }
+    return new Promise((res, rej) => { const q = this.db.transaction("kv", "readonly").objectStore("kv").get(k); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
+  },
+  async set(k, v) {
+    if (this.mode === "localStorage") { localStorage.setItem(DB_NAME + ":" + k, JSON.stringify(v)); return; }
+    return new Promise((res, rej) => {
+      const tx = this.db.transaction("kv", "readwrite"); tx.objectStore("kv").put(v, k);
+      tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error); tx.onabort = () => rej(tx.error || new Error("write aborted"));
+    });
+  },
+  async del(k) {
+    if (this.mode === "localStorage") { localStorage.removeItem(DB_NAME + ":" + k); return; }
+    return new Promise((res, rej) => { const tx = this.db.transaction("kv", "readwrite"); tx.objectStore("kv").delete(k); tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error); });
+  }
+};
+
+/* ---------- state ---------- */
+let S = null, saveTimer = null, saving = Promise.resolve(), dirty = false, persisted = null, snapshotInfo = null;
+function blankState() {
+  return {app: APP_ID, schema: SCHEMA, createdAt: new Date().toISOString(), updatedAt: null,
+    settings: {preLongest: null, theme: "dark", context: "", lastExport: null, welcomed: false}, days: {}};
+}
+function clone(o) { return JSON.parse(JSON.stringify(o)); }
+function setSaveMark(text, err) { const m = $("saveMark"); if (!m) return; m.textContent = text; m.classList.toggle("err", !!err); m.style.opacity = 1; clearTimeout(setSaveMark.h); if (!err) setSaveMark.h = setTimeout(() => { m.style.opacity = 0; }, 1500); }
+function scheduleSave() { dirty = true; clearTimeout(saveTimer); saveTimer = setTimeout(flush, 300); }
+function flush() {
+  clearTimeout(saveTimer);
+  if (!dirty) return saving;
+  dirty = false; S.updatedAt = new Date().toISOString();
+  const copy = clone(S);
+  saving = saving.then(() => store.set("state", copy)).then(() => setSaveMark("Saved")).catch(e => { dirty = true; setSaveMark("Not saved: " + (e && e.message ? e.message : "storage error"), true); });
+  return saving;
+}
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") flush(); });
+window.addEventListener("pagehide", () => { flush(); });
+
+function prune(iso) {
+  const d = S.days[iso]; if (!d) return;
+  if (d.physio) { for (const k of Object.keys(d.physio)) if (!Object.keys(d.physio[k]).length) delete d.physio[k]; if (!Object.keys(d.physio).length) delete d.physio; }
+  for (const s of ["session", "well"]) if (d[s] && !Object.keys(d[s]).length) delete d[s];
+  if (!Object.keys(d).filter(k => k !== "updatedAt").length) delete S.days[iso];
+}
+function setVal(iso, path, value) {
+  if (!S.days[iso]) S.days[iso] = {};
+  let o = S.days[iso];
+  for (let i = 0; i < path.length - 1; i++) { if (!o[path[i]] || typeof o[path[i]] !== "object") o[path[i]] = {}; o = o[path[i]]; }
+  const key = path[path.length - 1];
+  if (value === null || value === undefined || value === "") delete o[key]; else o[key] = value;
+  prune(iso);
+  if (S.days[iso]) S.days[iso].updatedAt = new Date().toISOString();
+  scheduleSave();
+}
+function getVal(iso, path) { let o = S.days[iso]; for (const k of path) { if (!o) return undefined; o = o[k]; } return o; }
+function loggedDays() { return Object.keys(S.days).filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k)).sort(); }
+
+/* ---------- calculations ---------- */
+function sess(iso) { const d = S.days[iso]; return (d && d.session) || null; }
+function effType(iso) { const s = sess(iso); return (s && s.type) || (P[iso] ? P[iso].typ : null); }
+function isDone(s) { return !!s && (s.status === "done" || s.status === "short"); }
+function runMin(iso) { const s = sess(iso); if (!isDone(s)) return 0; if (RUN_TYPES.indexOf(effType(iso)) < 0) return 0; return num(s.min) || 0; }
+function longest30(iso) {
+  let mx = 0;
+  for (let k = 1; k <= 30; k++) mx = Math.max(mx, runMin(isoAdd(iso, -k)));
+  const pre = num(S.settings.preLongest);
+  if (pre && dayDiff(iso, FIRST) <= 29) mx = Math.max(mx, pre);
+  return mx;
+}
+function capFor(iso) { const ref = longest30(iso); return ref ? Math.floor(ref * 1.1) : null; }
+function spike(iso) {
+  const m = runMin(iso); if (!m) return null;
+  const ref = longest30(iso);
+  if (effType(iso) === "Test/Race") return {kind: "race", m, ref};
+  if (!ref) return {kind: "baseline", m, ref};
+  const p = m / ref - 1;
+  return {kind: p > 0.1 ? "spike" : "ok", m, ref, p};
+}
+function efOf(iso) {
+  const s = sess(iso); if (!isDone(s)) return null;
+  const t = effType(iso); if (t !== "Run-Easy" && t !== "Run-Long") return null;
+  const km = num(s.km), m = num(s.min), hr = num(s.avgHr);
+  if (!km || !m || !hr) return null;
+  return (km * 1000 / m) / hr;
+}
+function wv(iso, key) { const d = S.days[iso]; const w = d && d.well; return w ? num(w[key]) : null; }
+function wvals(iso, key, from, to) { const out = []; for (let k = from; k <= to; k++) { const v = wv(isoAdd(iso, -k), key); if (v !== null) out.push(v); } return out; }
+function hrvStats(iso) {
+  const ln7 = [], raw7 = [], ln42 = [];
+  for (let k = 0; k < 42; k++) {
+    const v = wv(isoAdd(iso, -k), "hrv");
+    if (v && v > 0) { ln42.push(Math.log(v)); if (k < 7) { ln7.push(Math.log(v)); raw7.push(v); } }
+  }
+  const roll = ln7.length >= 4 ? mean(ln7) : null;
+  let base = null, sd = null, lo = null, hi = null;
+  if (ln42.length >= 21) { base = mean(ln42); sd = stdev(ln42); lo = base - 0.5 * sd; hi = base + 0.5 * sd; }
+  const cv = raw7.length >= 4 ? stdev(raw7) / mean(raw7) : null;
+  let status = "building";
+  if (roll !== null && lo !== null) status = roll < lo ? "below" : (roll > hi ? "above" : "in");
+  return {roll, base, sd, lo, hi, cv, status, n: ln42.length};
+}
+function hipFlag(iso) {
+  const t = wv(iso, "hipAM");
+  if (t !== null && t >= 4) return {cls: "bad", text: "Hip " + t + "/10 on waking: easy session or rest today."};
+  const a = wvals(iso, "hipAM", 0, 6), b = wvals(iso, "hipAM", 7, 13);
+  if (a.length >= 4 && b.length >= 4 && mean(a) > mean(b) + 0.5)
+    return {cls: "warn", text: "Hip on waking is rising (7-day average " + r1(mean(a)) + " vs " + r1(mean(b)) + "): hold progression."};
+  return null;
+}
+function moodFlag(iso) { const v = wvals(iso, "mood", 0, 6); if (v.length >= 5 && mean(v) <= 2.5) return "Mood has been low for a week. Talk to someone, a partner or your GP, rather than training harder."; return null; }
+function physioLogged(iso) { const d = S.days[iso]; if (!d || !d.physio) return false; return Object.values(d.physio).some(e => (num(e.sets) || 0) > 0); }
+function weekDays(w) { return DAYS.filter(x => x.w === w); }
+function weekSummary(w) {
+  const days = weekDays(w), today = todayISO();
+  let planToDate = 0, actual = 0, logged = 0, runs = 0, runT = 0, longest = 0, maxHip = null, maxKnee = null, gait = 0, spikes = 0, physio = 0, physioPlan = 0;
+  const efs = [], rl = [];
+  for (const x of days) {
+    const s0 = sess(x.d);
+    if (x.d <= today || (s0 && s0.status)) planToDate += x.min;
+    if (x.physio) physioPlan++;
+    const s = sess(x.d);
+    if (s && s.status) logged++;
+    if (isDone(s)) actual += num(s.min) || 0;
+    const rm = runMin(x.d); if (rm) { runs++; runT += rm; longest = Math.max(longest, rm); }
+    if (s) {
+      const h = num(s.hip), k = num(s.knee);
+      if (h !== null) maxHip = Math.max(maxHip === null ? 0 : maxHip, h);
+      if (k !== null) maxKnee = Math.max(maxKnee === null ? 0 : maxKnee, k);
+      if (s.gait === "yes") gait++;
+    }
+    const sp = spike(x.d); if (sp && sp.kind === "spike") spikes++;
+    const e = efOf(x.d); if (e) efs.push(e);
+    if (physioLogged(x.d)) physio++;
+    const b = getVal(x.d, ["physio", "bss"]);
+    if (b && num(b.effR) !== null && num(b.effL) !== null) rl.push(num(b.effR) - num(b.effL));
+  }
+  const planMin = days.reduce((s, x) => s + x.min, 0);
+  const avgOf = (list, key) => { const v = list.map(x => wv(x.d, key)).filter(v => v !== null); return v.length ? mean(v) : null; };
+  const hipAM = avgOf(days, "hipAM");
+  const prev = w > 1 ? avgOf(weekDays(w - 1), "hipAM") : null;
+  const hipDelta = hipAM !== null && prev !== null ? hipAM - prev : null;
+  const endIso = days[days.length - 1].d < today ? days[days.length - 1].d : clampISO(today);
+  const reasons = [];
+  if (maxHip !== null && maxHip > 3) reasons.push("Hip went above 3/10 during a session (" + maxHip + "/10).");
+  if (maxKnee !== null && maxKnee > 3) reasons.push("Knee went above 3/10 during a session (" + maxKnee + "/10).");
+  if (gait) reasons.push(gait + (gait > 1 ? " sessions" : " session") + " with a gait change.");
+  if (hipDelta !== null && hipDelta > 0.5) reasons.push("Hip on waking up " + r1(hipDelta) + " on last week.");
+  const denom = planToDate || planMin;
+  return {w, days, planMin, planToDate, actual, logged, completion: logged && denom ? actual / denom : null,
+    runs, runMin: runT, longest, maxHip, maxKnee, gait, spikes, physio, physioPlan, rl: rl.length ? mean(rl) : null,
+    hipAM, prevHipAM: prev, hipDelta, kneeAM: avgOf(days, "kneeAM"), sleep: avgOf(days, "sleepH"), sleepQ: avgOf(days, "sleepQ"),
+    mood: avgOf(days, "mood"), stress: avgOf(days, "stress"), energy: avgOf(days, "energy"), rhr: avgOf(days, "rhr"), hrvAvg: avgOf(days, "hrv"),
+    alcohol: days.map(x => wv(x.d, "alcohol")).filter(v => v !== null).reduce((s, x) => s + x, 0),
+    hrv: hrvStats(endIso), ef: efs.length ? mean(efs) : null,
+    decision: logged ? (reasons.length ? "HOLD" : "PROGRESS") : null, reasons};
+}
+
+/* ---------- view state ---------- */
+const VIEW = {tab: "today", date: clampISO(todayISO()), week: P[clampISO(todayISO())].w,
+  rep: {w: null, days: true, well: true, trend: true, next: true, context: true}, pendingImport: null};
+
+function setTab(tab) { VIEW.tab = tab; if (location.hash !== "#" + tab) history.replaceState(null, "", "#" + tab); render(); window.scrollTo(0, 0); }
+function goDate(iso) { VIEW.date = clampISO(iso); VIEW.week = P[VIEW.date].w; if (VIEW.tab !== "today") VIEW.tab = "today"; render(); window.scrollTo(0, 0); }
+function goWeek(w) { VIEW.week = Math.min(PLAN.weeks, Math.max(1, w)); render(); }
+
+function render() {
+  document.querySelectorAll("nav.tabs button").forEach(b => b.setAttribute("aria-current", b.dataset.tab === VIEW.tab ? "page" : "false"));
+  const top = $("top"), view = $("view");
+  top.innerHTML = ""; view.innerHTML = "";
+  ({today: renderToday, week: renderWeek, report: renderReport, guide: renderGuide, data: renderData})[VIEW.tab](top, view);
+}
+function countdown() {
+  const t = todayISO();
+  const h = dayDiff(PLAN.hm, t), r = dayDiff(PLAN.race, t);
+  return (h > 0 ? "Half in " + h + " days" : (h === 0 ? "Half today" : "Half done")) + " · " + (r > 0 ? r + " days to Edinburgh" : (r === 0 ? "Race day" : "Edinburgh done"));
+}
+function headerNav(top, title, sub, prev, next, prevDis, nextDis) {
+  top.append(el("div", {class: "navrow"},
+    el("button", {class: "navbtn", "aria-label": "Previous", disabled: prevDis || null, onclick: prev}, "‹"),
+    el("div", {class: "tt"}, el("b", {text: title}), el("span", {text: sub})),
+    el("button", {class: "navbtn", "aria-label": "Next", disabled: nextDis || null, onclick: next}, "›")));
+}
+function headerPlain(top, title, sub) {
+  top.append(el("div", {class: "navrow"}, el("div", {class: "tt"}, el("b", {text: title}), el("span", {text: sub}))));
+}
+function subRow(top, extra) { top.append(el("div", {class: "subrow"}, el("span", {text: countdown()}), extra || null, el("span", {id: "saveMark"}))); }
+
+/* ---------- reusable fields ---------- */
+function field(label, control, ends) {
+  return el("div", {class: "field"}, el("div", {class: "lab"}, el("span", {text: label}), ends ? el("span", {class: "ends", text: ends}) : null), control);
+}
+function numField(label, path, iso, opt) {
+  const v = getVal(iso, path);
+  const inp = el("input", {class: "inp", type: "text", inputmode: opt.mode || "decimal", autocomplete: "off", "aria-label": label,
+    placeholder: opt.ph || "", value: v === undefined || v === null ? "" : String(v)});
+  inp.addEventListener("input", () => { const n = num(inp.value); setVal(iso, path, inp.value.trim() === "" ? null : n); refresh(iso); });
+  return field(label, inp);
+}
+function textField(label, path, iso, opt, multi) {
+  const v = getVal(iso, path) || "";
+  const inp = multi ? el("textarea", {class: "inp", "aria-label": label, placeholder: opt.ph || ""}) : el("input", {class: "inp", type: "text", "aria-label": label, placeholder: opt.ph || ""});
+  inp.value = v;
+  inp.addEventListener("input", () => { setVal(iso, path, inp.value.slice(0, 2000) || null); refresh(iso); });
+  return field(label, inp);
+}
+function scaleField(label, path, iso, min, max, ends) {
+  const n = max - min + 1, cols = n <= 6 ? n : (n === 11 ? 6 : 5);
+  const wrap = el("div", {class: "seg2", style: "grid-template-columns:repeat(" + cols + ",1fr)", role: "group", "aria-label": label});
+  const cur = num(getVal(iso, path));
+  for (let v = min; v <= max; v++) {
+    const b = el("button", {type: "button", "aria-pressed": cur === v ? "true" : "false", text: String(v)});
+    b.addEventListener("click", () => {
+      const now = num(getVal(iso, path)); const nv = now === v ? null : v;
+      setVal(iso, path, nv);
+      wrap.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(nv !== null && Number(x.textContent) === nv)));
+      refresh(iso);
+    });
+    wrap.append(b);
+  }
+  return field(label, wrap, ends ? min + " " + ends[0] + " · " + max + " " + ends[1] : null);
+}
+function segField(label, path, iso, opts) {
+  const wrap = el("div", {class: "seg2", style: "grid-template-columns:repeat(" + opts.length + ",1fr)", role: "group", "aria-label": label});
+  const cur = getVal(iso, path);
+  for (const [v, t] of opts) {
+    const b = el("button", {type: "button", "aria-pressed": cur === v ? "true" : "false", text: t});
+    b.addEventListener("click", () => {
+      const nv = getVal(iso, path) === v ? null : v;
+      setVal(iso, path, nv);
+      wrap.querySelectorAll("button").forEach((x, i) => x.setAttribute("aria-pressed", String(nv === opts[i][0])));
+      refresh(iso);
+    });
+    wrap.append(b);
+  }
+  return field(label, wrap);
+}
+function stepField(label, path, iso, min, max, start) {
+  const vEl = el("div", {class: "v"});
+  const show = () => { const v = num(getVal(iso, path)); vEl.textContent = v === null ? "–" : String(v); vEl.classList.toggle("empty", v === null); };
+  const change = d => { const v = num(getVal(iso, path)); const nv = v === null ? start : Math.min(max, Math.max(min, v + d)); setVal(iso, path, nv); show(); refresh(iso); };
+  const st = el("div", {class: "stepper", role: "group", "aria-label": label},
+    el("button", {type: "button", "aria-label": label + " down", onclick: () => change(-1)}, "−"), vEl,
+    el("button", {type: "button", "aria-label": label + " up", onclick: () => change(1)}, "+"));
+  vEl.addEventListener("click", () => { setVal(iso, path, null); show(); refresh(iso); });
+  show();
+  return field(label, st);
+}
+
+/* ---------- TODAY ---------- */
+function renderToday(top, view) {
+  const iso = VIEW.date, p = P[iso], today = clampISO(todayISO());
+  headerNav(top, fmt(iso, {weekday: "short", day: "numeric", month: "short"}), "Week " + p.w + " of " + PLAN.weeks + " · " + PLAN.blocks[p.w],
+    () => goDate(isoAdd(iso, -1)), () => goDate(isoAdd(iso, 1)), iso <= FIRST, iso >= LAST);
+  subRow(top, iso !== today ? el("button", {class: "pill", onclick: () => goDate(today)}, "Today") : null);
+  const b = banners(); if (b) view.append(b);
+  view.append(planCard(p, iso === todayISO()));
+  view.append(checkinCard(iso));
+  view.append(logCard(iso));
+  refresh(iso);
+}
+function banners() {
+  const n = loggedDays().length;
+  if (!S.settings.welcomed && n === 0) {
+    return el("div", {class: "banner info"},
+      el("b", {text: "Before you start"}),
+      el("p", {text: "1. Install it: Chrome menu ⋮, then Install app. 2. Your log lives only on this phone, so export a backup every week from the Data tab. 3. Put your longest October run in Data so the load check works from day one."}),
+      el("button", {class: "btn", onclick: () => { S.settings.welcomed = true; scheduleSave(); render(); }}, "Got it"));
+  }
+  const last = S.settings.lastExport ? dayDiff(todayISO(), S.settings.lastExport.slice(0, 10)) : null;
+  if (n > 0 && (last === null || last >= 7)) {
+    return el("div", {class: "banner"},
+      el("b", {text: last === null ? "Back up your log" : "Last backup " + last + " days ago"}),
+      el("p", {text: "Everything you log lives only in this browser. A backup file is the only copy that survives a lost phone or cleared data."}),
+      el("div", {class: "btns"}, el("button", {class: "btn primary", onclick: exportData}, "Export now"), el("button", {class: "btn", onclick: shareBackup}, "Share backup")));
+  }
+  return null;
+}
+function planCard(p, isToday) {
+  const card = el("section", {class: "card plan tone-" + p.tone});
+  const topEl = el("div", {class: "top"});
+  const chips = [];
+  if (isToday) chips.push(el("span", {class: "chip now", text: "Today"}));
+  if (p.typ === "Test/Race") chips.push(el("span", {class: "chip gate", text: p.title.indexOf("EDINBURGH") === 0 ? "Race" : "Gate"}));
+  else if (p.down) chips.push(el("span", {class: "chip", text: "Down week"}));
+  topEl.append(el("div", {class: "dateline"}, el("span", {text: fmt(p.d, {weekday: "long", day: "numeric", month: "long"})}), chips));
+  topEl.append(el("h1", {text: p.title}));
+  topEl.append(el("div", {class: "mins"}, el("b", {text: p.min > 0 ? String(p.min) : "Rest"}), p.min > 0 ? el("span", {text: "min"}) : null));
+  topEl.append(el("div", {class: "lead", text: p.lead}));
+  if (p.run) topEl.append(el("div", {class: "cap", id: "capLine"}));
+  if (p.band) {
+    const tr = el("div", {class: "track"});
+    ZONES.forEach(z => tr.append(el("div", {class: "seg tone-" + z[0], style: "left:" + pct(z[1]) + "%;width:" + (pct(z[2]) - pct(z[1])) + "%"})));
+    tr.append(el("div", {class: "fill", style: "left:" + pct(p.band[0]) + "%;width:" + Math.max(1.5, pct(p.band[1]) - pct(p.band[0])) + "%"}));
+    tr.append(el("div", {class: "lthr", style: "left:calc(" + pct(LTHR) + "% - 1px)"}));
+    const ticks = el("div", {class: "ticks"});
+    [133, 150, 167, 188, 207].forEach(v => ticks.append(el("span", {style: "left:" + pct(v) + "%", text: String(v)})));
+    const redundant = p.hr.indexOf(p.band[0] + "-" + p.band[1]) === 0;
+    topEl.append(el("div", {class: "hr"}, el("div", {class: "hr-head"}, el("span", {text: "Heart rate"}), el("span", {class: "data", text: p.band[0] + "–" + p.band[1] + " bpm"})),
+      tr, ticks, redundant ? null : el("div", {class: "hrnote", text: p.hr})));
+  }
+  if (p.run || p.typ === "Test/Race") topEl.append(el("div", {class: "hip"},
+    el("div", {}, el("b", {text: "Gait"}), "Unchanged, or stop"), el("div", {}, el("b", {text: "During"}), "3/10 or less"), el("div", {}, el("b", {text: "Morning"}), "Back to baseline")));
+  if (p.typ === "Strength") {
+    const ul = el("ul", {class: "exlist"});
+    EX.forEach(([, name]) => ul.append(el("li", {}, el("span", {text: name}), el("span", {text: p.physio + " × 8"}))));
+    topEl.append(ul, el("div", {class: "hint", text: "Load, tempo and progression as your physio set them. Lead with your weaker side, match the reps on the other."}));
+  }
+  if (p.run && p.physio > 0) topEl.append(el("div", {class: "note later"}, el("b", {text: "Later today "}), "Physio routine, " + p.physio + " × 8 each side."));
+  if (p.heat) { const ht = p.heat.replace(/^HEAT( ACCLIMATION)?\s*/, ""); topEl.append(el("div", {class: "note heat"}, el("b", {text: "Heat acclimation · "}), ht.charAt(0).toUpperCase() + ht.slice(1))); }
+  card.append(topEl);
+  card.append(el("details", {class: "more"}, el("summary", {}, "Full session"), el("p", {text: p.body})));
+  if (p.mvs) card.append(el("details", {class: "more"}, el("summary", {}, "Bad day"), el("p", {text: p.mvs + ". It counts. Log it as Short version."})));
+  let x0 = null, y0 = null;
+  card.addEventListener("touchstart", e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, {passive: true});
+  card.addEventListener("touchend", e => {
+    if (x0 === null) return;
+    const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null;
+    if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 2) goDate(isoAdd(VIEW.date, dx < 0 ? 1 : -1));
+  }, {passive: true});
+  return card;
+}
+function checkinSummary(iso) {
+  const parts = [];
+  const s = wv(iso, "sleepH"), m = wv(iso, "mood"), h = wv(iso, "hrv"), hip = wv(iso, "hipAM");
+  if (s !== null) parts.push("sleep " + s + " h"); if (m !== null) parts.push("mood " + m);
+  if (h !== null) parts.push("HRV " + h); if (hip !== null) parts.push("hip " + hip + "/10");
+  return parts.length ? parts.join(" · ") : "Not filled in yet";
+}
+function checkinCard(iso) {
+  const filled = !!getVal(iso, ["well"]);
+  const det = el("details", {class: "card form", open: !filled || null},
+    el("summary", {}, el("span", {class: "sum-t", text: "Morning check-in"}), el("span", {class: "sum-s", id: "ciSum", text: checkinSummary(iso)})));
+  det.append(el("div", {class: "fbody"},
+    el("div", {class: "row2"}, numField("Sleep (hours)", ["well", "sleepH"], iso, {ph: "6.5"}), numField("Resting HR", ["well", "rhr"], iso, {mode: "numeric", ph: "52"})),
+    scaleField("Sleep quality", ["well", "sleepQ"], iso, 1, 5, ["poor", "great"]),
+    scaleField("Mood", ["well", "mood"], iso, 1, 5, ["low", "great"]),
+    scaleField("Stress", ["well", "stress"], iso, 1, 5, ["wired", "calm"]),
+    scaleField("Energy", ["well", "energy"], iso, 1, 5, ["flat", "fresh"]),
+    el("div", {class: "row2"}, numField("HRV rMSSD (ms)", ["well", "hrv"], iso, {ph: "55"}), numField("Alcohol yesterday (units)", ["well", "alcohol"], iso, {ph: "0"})),
+    scaleField("Hip on waking", ["well", "hipAM"], iso, 0, 10, ["none", "worst"]),
+    scaleField("Knee on waking", ["well", "kneeAM"], iso, 0, 10, ["none", "worst"]),
+    textField("One line about today", ["well", "line"], iso, {ph: "Broken night. Hip stiff for the first few steps."}),
+    el("div", {class: "fb", id: "ciFb"})));
+  return det;
+}
+function logCard(iso) {
+  const sec = el("section", {class: "card form", id: "logCard"});
+  sec.append(el("h2", {class: "ct", text: "What you actually did"}));
+  const status = el("div", {class: "status", role: "group", "aria-label": "Session status"});
+  const cur = getVal(iso, ["session", "status"]);
+  [["done", "Done"], ["short", "Short version"], ["skipped", "Skipped"]].forEach(([v, t]) => {
+    status.append(el("button", {type: "button", "aria-pressed": cur === v ? "true" : "false", text: t, onclick: () => {
+      const was = getVal(iso, ["session", "status"]);
+      const nv = was === v ? null : v;
+      setVal(iso, ["session", "status"], nv);
+      if (nv === "done" && getVal(iso, ["session", "min"]) === undefined && P[iso].min > 0) setVal(iso, ["session", "min"], P[iso].min);
+      status.querySelectorAll("button").forEach((b, i) => b.setAttribute("aria-pressed", String(["done", "short", "skipped"][i] === nv)));
+      fillLog(body, iso); refresh(iso);
+    }}));
+  });
+  const body = el("div", {style: "display:grid;gap:14px"});
+  sec.append(status, body);
+  fillLog(body, iso);
+  return sec;
+}
+function fillLog(body, iso) {
+  body.innerHTML = "";
+  const p = P[iso], status = getVal(iso, ["session", "status"]);
+  if (!status) {
+    body.append(el("p", {class: "hint", text: "Tap Done, Short version or Skipped. Done fills in the planned minutes; change them if you did something different."}));
+    if (p.physio > 0) body.append(physioBlock(iso));
+    body.append(el("div", {class: "fb", id: "logFb"}));
+    return;
+  }
+  if (status === "skipped") {
+    body.append(textField("Why? (optional)", ["session", "notes"], iso, {ph: "Hip sore on waking, took the rest day."}, true));
+    body.append(el("div", {class: "fb", id: "logFb"}));
+    return;
+  }
+  const type = effType(iso), isRun = RUN_TYPES.indexOf(type) >= 0;
+  const sel = el("select", {class: "inp", "aria-label": "Activity"});
+  TYPES.forEach(([v, t]) => sel.append(el("option", {value: v, selected: v === type || null}, t)));
+  sel.addEventListener("change", () => { setVal(iso, ["session", "type"], sel.value === p.typ ? null : sel.value); fillLog(body, iso); refresh(iso); });
+  body.append(field("Activity", sel));
+  if (type !== "Rest") body.append(el("div", {class: "row2"},
+    numField("Minutes", ["session", "min"], iso, {mode: "numeric", ph: p.min ? String(p.min) : ""}),
+    isRun ? numField("Distance (km)", ["session", "km"], iso, {ph: "5.0"}) : el("div")));
+  if (isRun) body.append(el("div", {class: "row3"},
+    numField("Avg HR", ["session", "avgHr"], iso, {mode: "numeric", ph: "155"}),
+    numField("Max HR", ["session", "maxHr"], iso, {mode: "numeric", ph: "165"}),
+    numField("Cadence", ["session", "cad"], iso, {mode: "numeric", ph: "166"})));
+  if (isRun || type === "Strength") body.append(scaleField("Effort (RPE)", ["session", "rpe"], iso, 1, 10, ["easy", "max"]));
+  if (isRun) body.append(
+    scaleField("Hip pain during", ["session", "hip"], iso, 0, 10, ["none", "worst"]),
+    scaleField("Knee pain during", ["session", "knee"], iso, 0, 10, ["none", "worst"]),
+    segField("Gait changed?", ["session", "gait"], iso, [["no", "No"], ["yes", "Yes"]]));
+  if (p.physio > 0 || type === "Strength") body.append(physioBlock(iso));
+  body.append(textField("Notes", ["session", "notes"], iso, {ph: "How it felt, route, conditions."}, true));
+  body.append(el("div", {class: "fb", id: "logFb"}));
+}
+function rlText(iso, k) {
+  const d = getVal(iso, ["physio", k]); if (!d) return "";
+  const r = num(d.effR), l = num(d.effL);
+  return r !== null && l !== null ? "R−L " + (r - l > 0 ? "+" : "") + (r - l) : "";
+}
+function physioBlock(iso) {
+  const sets = P[iso].physio || 3;
+  const box = el("div", {class: "physio"}, el("div", {class: "ph-h"}, el("b", {text: "Physio routine"}), el("span", {text: sets + " × 8 each side · weaker side first"})));
+  EX.forEach(([k, name]) => {
+    box.append(el("div", {class: "excard"},
+      el("div", {class: "exh"}, el("b", {text: name}), el("span", {id: "rl-" + k, text: rlText(iso, k)})),
+      el("div", {class: "row2"}, numField("Load (kg)", ["physio", k, "kg"], iso, {ph: "0"}), stepField("Sets done", ["physio", k, "sets"], iso, 0, 5, sets)),
+      el("div", {class: "row2"}, stepField("Effort right", ["physio", k, "effR"], iso, 1, 10, 5), stepField("Effort left", ["physio", k, "effL"], iso, 1, 10, 5)),
+      el("div", {class: "row2"}, stepField("Pain (0–10)", ["physio", k, "pain"], iso, 0, 10, 0), el("div"))));
+  });
+  return box;
+}
+
+/* live feedback, no re-render */
+function refresh(iso) {
+  const capEl = $("capLine");
+  if (capEl) {
+    const ref = longest30(iso), cap = capFor(iso), p = P[iso];
+    capEl.className = "cap";
+    if (!ref) capEl.textContent = "Load cap: no 30-day reference yet. Add your longest October run in Data, or it starts from your first logged run.";
+    else if (p.min > cap && p.typ !== "Test/Race") { capEl.className = "cap warn"; capEl.textContent = "Load cap today: " + cap + " min (10% over your 30-day longest of " + ref + "). The plan says " + p.min + ": run " + cap + "."; }
+    else capEl.textContent = "Load cap today: " + cap + " min (10% over your 30-day longest of " + ref + ").";
+  }
+  const sum = $("ciSum"); if (sum) sum.textContent = checkinSummary(iso);
+  const ci = $("ciFb");
+  if (ci) {
+    ci.innerHTML = "";
+    const h = hrvStats(iso);
+    if (wv(iso, "hrv") !== null || h.n) {
+      if (h.status === "building") ci.append(el("div", {class: "flag", text: "HRV: building your baseline (" + h.n + " of 21 readings in the last 6 weeks)."}));
+      else if (h.status === "below") ci.append(el("div", {class: "flag warn", text: "HRV 7-day average is below your band: easy or minimum session today. If you also feel rough, rest."}));
+      else ci.append(el("div", {class: "flag good", text: "HRV 7-day average " + (h.status === "in" ? "is in your band" : "is above your band") + ": train as planned."}));
+    }
+    const hf = hipFlag(iso); if (hf) ci.append(el("div", {class: "flag " + hf.cls, text: hf.text}));
+    const mf = moodFlag(iso); if (mf) ci.append(el("div", {class: "flag warn", text: mf}));
+  }
+  const lf = $("logFb");
+  if (lf) {
+    lf.innerHTML = "";
+    const s = sess(iso) || {};
+    const sp = spike(iso);
+    if (sp) {
+      if (sp.kind === "race") lf.append(el("div", {class: "flag", text: "Race or test: exempt from the load rule."}));
+      else if (sp.kind === "baseline") lf.append(el("div", {class: "flag", text: "No 30-day reference yet, so no load check for this run."}));
+      else if (sp.kind === "spike") lf.append(el("div", {class: "flag bad", text: "Spike: " + sp.m + " min is " + Math.round(sp.p * 100) + "% over your 30-day longest of " + sp.ref + ". The cap was " + Math.floor(sp.ref * 1.1) + "."}));
+      else lf.append(el("div", {class: "flag good", text: sp.m + " min is " + (sp.p >= 0 ? "+" : "") + Math.round(sp.p * 100) + "% on your 30-day longest of " + sp.ref + ". Within the rule."}));
+    }
+    const hip = num(s.hip), knee = num(s.knee);
+    if ((hip !== null && hip > 3) || (knee !== null && knee > 3)) lf.append(el("div", {class: "flag bad", text: "Above 3/10 during the session: next session easy, and nothing progresses this week."}));
+    if (s.gait === "yes") lf.append(el("div", {class: "flag bad", text: "Gait changed: that is the stop signal. Note what happened and tell your physio."}));
+    const ef = efOf(iso); if (ef) lf.append(el("div", {class: "flag", text: "Efficiency factor " + ef.toFixed(3) + " (your August easy runs: 1.111). Compare easy runs only; read the trend."}));
+  }
+  EX.forEach(([k]) => { const r = $("rl-" + k); if (r) r.textContent = rlText(iso, k); });
+}
+
+/* ---------- WEEK ---------- */
+function renderWeek(top, view) {
+  const w = VIEW.week, days = weekDays(w), W = weekSummary(w);
+  headerNav(top, "Week " + w + " of " + PLAN.weeks, PLAN.blocks[w] + (days[0].down ? " · down week" : "") + " · " + fmt(days[0].d, {day: "numeric", month: "short"}) + "–" + fmt(days[6].d, {day: "numeric", month: "short"}),
+    () => goWeek(w - 1), () => goWeek(w + 1), w <= 1, w >= PLAN.weeks);
+  subRow(top);
+  const dec = el("section", {class: "card decision " + (W.decision === "HOLD" ? "hold" : (W.decision ? "go" : "none"))},
+    el("div", {class: "muted", text: "Next week"}), el("div", {class: "big", text: W.decision || "No data yet"}));
+  if (W.decision === "HOLD") dec.append(el("ul", {}, W.reasons.map(r => el("li", {text: r}))), el("div", {class: "muted", text: "Repeat this week's numbers. The load cap on each run day keeps you honest."}));
+  else if (W.decision) dec.append(el("div", {class: "muted", text: "No pain above 3/10, no gait changes, hip on waking not rising."}));
+  else dec.append(el("div", {class: "muted", text: "Log sessions on the Today tab and this fills in."}));
+  view.append(dec);
+  const tile = (k, v, s, cls) => el("div", {class: "tile" + (cls ? " " + cls : "")}, el("div", {class: "k", text: k}), el("div", {class: "v", text: v}), s ? el("div", {class: "s", text: s}) : null);
+  const h = W.hrv;
+  view.append(el("div", {class: "tiles"},
+    tile("Completion", W.completion === null ? "–" : Math.round(W.completion * 100) + "%", W.actual + " of " + (W.planToDate || W.planMin) + " min" + (W.planToDate && W.planToDate < W.planMin ? " so far" : ""), W.completion !== null && W.completion < 0.7 ? "warn" : null),
+    tile("Running", W.runMin + " min", W.runs + " runs · longest " + (W.longest || "–"), W.spikes ? "bad" : null),
+    tile("Physio", W.physio + " of " + W.physioPlan, W.rl === null ? "R−L effort: –" : "Split squat R−L " + (W.rl > 0 ? "+" : "") + r1(W.rl)),
+    tile("Hip on waking", W.hipAM === null ? "–" : r1(W.hipAM) + "/10", W.hipDelta === null ? "no previous week" : (W.hipDelta > 0 ? "+" : "") + r1(W.hipDelta) + " vs last week", W.hipDelta !== null && W.hipDelta > 0.5 ? "warn" : null),
+    tile("Max pain during", (W.maxHip === null ? "–" : W.maxHip) + " / " + (W.maxKnee === null ? "–" : W.maxKnee), "hip / knee · gait changes " + W.gait, (W.maxHip > 3 || W.maxKnee > 3 || W.gait) ? "bad" : null),
+    tile("HRV", h.status === "building" ? "Building" : (h.status === "below" ? "Below band" : (h.status === "in" ? "In band" : "Above band")), h.roll === null ? h.n + (h.n === 1 ? " reading" : " readings") + " so far" : "7-day ln " + h.roll.toFixed(2), h.status === "below" ? "warn" : null),
+    tile("Sleep", W.sleep === null ? "–" : r1(W.sleep) + " h", W.mood === null ? "mood –" : "mood " + r1(W.mood) + "/5"),
+    tile("Efficiency", W.ef === null ? "–" : W.ef.toFixed(3), "easy runs · August 1.111")));
+  const list = el("section", {class: "card dlist"});
+  const today = todayISO();
+  days.forEach(p => {
+    const s = sess(p.d), sp = spike(p.d);
+    const st = s && s.status;
+    const badges = [];
+    if (st === "done") badges.push(el("span", {class: "badge ok", text: "Done"}));
+    else if (st === "short") badges.push(el("span", {class: "badge mid", text: "Short"}));
+    else if (st === "skipped") badges.push(el("span", {class: "badge bad", text: "Skipped"}));
+    if (sp && sp.kind === "spike") badges.push(el("span", {class: "badge bad", text: "Spike"}));
+    if (s && ((num(s.hip) || 0) > 3 || (num(s.knee) || 0) > 3)) badges.push(el("span", {class: "badge bad", text: "Pain"}));
+    if (s && s.gait === "yes") badges.push(el("span", {class: "badge bad", text: "Gait"}));
+    const actual = isDone(s) && num(s.min) !== null ? num(s.min) : null;
+    list.append(el("button", {class: "drow tone-" + p.tone + (p.d === today ? " today" : ""), onclick: () => goDate(p.d)},
+      el("span", {class: "d"}, p.dow, el("i", {text: String(Number(p.d.slice(8)))})),
+      el("span", {class: "st"}),
+      el("span", {class: "t"}, el("b", {text: p.title}), el("span", {}, badges.length ? badges.reduce((a, b) => a.concat([b, " "]), []) : (p.short || ""))),
+      el("span", {class: "r"}, el("b", {text: actual !== null ? String(actual) : (p.min ? String(p.min) : "–")}), actual !== null ? "of " + p.min : "plan")));
+  });
+  view.append(list);
+  view.append(el("div", {class: "btns"}, el("button", {class: "btn primary full", onclick: () => { VIEW.rep.w = w; setTab("report"); }}, "Make this week's report")));
+}
+
+/* ---------- REPORT ---------- */
+function mdCell(v) { return v === null || v === undefined || v === "" ? "" : String(v).replace(/\|/g, "/").replace(/\s*\n\s*/g, " "); }
+function buildReport(w, o) {
+  const W = weekSummary(w), days = W.days, L = [];
+  const f = iso => fmt(iso, {weekday: "short", day: "numeric", month: "short"});
+  L.push("# Training report: week " + w + " of " + PLAN.weeks + " (" + fmt(days[0].d, {day: "numeric", month: "short"}) + " to " + fmt(days[6].d, {day: "numeric", month: "short", year: "numeric"}) + ")");
+  L.push("Block: " + PLAN.blocks[w] + (days[0].down ? " (down week)" : "") + ". Generated " + fmt(todayISO(), {day: "numeric", month: "short", year: "numeric"}) + " from my training log app.");
+  L.push("");
+  L.push("## Next week: " + (W.decision || "not enough data yet"));
+  if (W.reasons.length) W.reasons.forEach(r => L.push("- " + r));
+  else if (W.decision) L.push("- No pain above 3/10, no gait changes, hip on waking not rising.");
+  L.push("");
+  L.push("## Summary");
+  L.push("- Completion: " + (W.completion === null ? "n/a" : Math.round(W.completion * 100) + "%") + " (" + W.actual + " of " + (W.planToDate || W.planMin) + " planned min" + (W.planToDate && W.planToDate < W.planMin ? " to date" : "") + ")");
+  L.push("- Running: " + W.runs + " runs, " + W.runMin + " min, longest " + (W.longest || 0) + " min, load-rule spikes: " + W.spikes);
+  L.push("- Physio sessions: " + W.physio + " of " + W.physioPlan + (W.rl === null ? "" : "; split squat effort right minus left: " + (W.rl > 0 ? "+" : "") + r1(W.rl)));
+  L.push("- Pain during sessions (max): hip " + (W.maxHip === null ? "n/a" : W.maxHip + "/10") + ", knee " + (W.maxKnee === null ? "n/a" : W.maxKnee + "/10") + "; gait changes: " + W.gait);
+  L.push("- Hip on waking: " + (W.hipAM === null ? "n/a" : r1(W.hipAM) + "/10 average") + (W.hipDelta === null ? "" : " (" + (W.hipDelta > 0 ? "+" : "") + r1(W.hipDelta) + " vs last week)") + "; knee on waking: " + (W.kneeAM === null ? "n/a" : r1(W.kneeAM) + "/10"));
+  const h = W.hrv;
+  L.push("- HRV: " + (h.status === "building" ? "building baseline (" + h.n + " readings)" : h.status + " band; 7-day ln rMSSD " + h.roll.toFixed(3) + ", band " + h.lo.toFixed(3) + " to " + h.hi.toFixed(3) + (h.cv === null ? "" : ", CV " + (h.cv * 100).toFixed(1) + "%")) + (W.hrvAvg === null ? "" : "; average rMSSD " + r1(W.hrvAvg) + " ms"));
+  L.push("- Wellbeing averages: sleep " + (W.sleep === null ? "n/a" : r1(W.sleep) + " h") + ", sleep quality " + (W.sleepQ === null ? "n/a" : r1(W.sleepQ) + "/5") + ", mood " + (W.mood === null ? "n/a" : r1(W.mood) + "/5") + ", stress " + (W.stress === null ? "n/a" : r1(W.stress) + "/5 (5 = calm)") + ", energy " + (W.energy === null ? "n/a" : r1(W.energy) + "/5") + ", resting HR " + (W.rhr === null ? "n/a" : Math.round(W.rhr)) + ", alcohol " + r1(W.alcohol) + " units");
+  if (W.ef !== null) L.push("- Efficiency factor (easy runs): " + W.ef.toFixed(3) + " (August reference 1.111)");
+  if (o.days) {
+    L.push(""); L.push("## Day by day");
+    L.push("| Day | Planned | Logged | Min | km | Avg HR | RPE | Hip | Knee | Gait | Load check | Notes |");
+    L.push("|---|---|---|---|---|---|---|---|---|---|---|---|");
+    days.forEach(p => {
+      const s = sess(p.d) || {}, sp = spike(p.d);
+      const st = s.status ? ({done: "Done", short: "Short", skipped: "Skipped"})[s.status] + (s.type && s.type !== p.typ ? " (" + TYPE_LABEL[s.type] + ")" : "") : "not logged";
+      const chk = sp ? (sp.kind === "spike" ? "SPIKE +" + Math.round(sp.p * 100) + "%" : sp.kind === "ok" ? (sp.p >= 0 ? "+" : "") + Math.round(sp.p * 100) + "%" : sp.kind) : "";
+      L.push("| " + [f(p.d), p.title + (p.min ? " " + p.min + "'" : ""), st, s.min, s.km, s.avgHr, s.rpe, s.hip, s.knee, s.gait, chk, s.notes].map(mdCell).join(" | ") + " |");
+    });
+    const ph = days.filter(p => getVal(p.d, ["physio"]));
+    if (ph.length) {
+      L.push(""); L.push("Physio log (load kg, sets, effort right/left 1-10, pain 0-10):");
+      ph.forEach(p => {
+        const parts = EX.map(([k, name]) => { const e = getVal(p.d, ["physio", k]); if (!e) return null;
+          return name + ": " + (e.kg !== undefined ? e.kg + " kg, " : "") + (e.sets !== undefined ? e.sets + " sets, " : "") + "R " + (e.effR !== undefined ? e.effR : "-") + " / L " + (e.effL !== undefined ? e.effL : "-") + (e.pain !== undefined ? ", pain " + e.pain : ""); }).filter(Boolean);
+        L.push("- " + f(p.d) + ": " + parts.join("; "));
+      });
+    }
+  }
+  if (o.well) {
+    L.push(""); L.push("## Morning check-ins");
+    L.push("| Day | Sleep h | Sleep q | Mood | Stress | Energy | RHR | HRV | Hip AM | Knee AM | Alcohol | Note |");
+    L.push("|---|---|---|---|---|---|---|---|---|---|---|---|");
+    days.forEach(p => { const w2 = getVal(p.d, ["well"]) || {};
+      L.push("| " + [f(p.d), w2.sleepH, w2.sleepQ, w2.mood, w2.stress, w2.energy, w2.rhr, w2.hrv, w2.hipAM, w2.kneeAM, w2.alcohol, w2.line].map(mdCell).join(" | ") + " |"); });
+  }
+  if (o.trend) {
+    L.push(""); L.push("## Trend so far");
+    L.push("| Wk | Completion | Run min | Longest | Max hip | Hip AM avg | Split squat R-L | HRV | Decision |");
+    L.push("|---|---|---|---|---|---|---|---|---|");
+    for (let k = 1; k <= w; k++) {
+      const X = weekSummary(k); if (!X.logged) continue;
+      L.push("| " + [k, X.completion === null ? "" : Math.round(X.completion * 100) + "%", X.runMin, X.longest, X.maxHip, X.hipAM === null ? "" : r1(X.hipAM), X.rl === null ? "" : r1(X.rl), X.hrv.status, X.decision].map(mdCell).join(" | ") + " |");
+    }
+  }
+  if (o.next && w < PLAN.weeks) {
+    L.push(""); L.push("## Planned for week " + (w + 1) + " (" + PLAN.blocks[w + 1] + ")");
+    weekDays(w + 1).forEach(p => L.push("- " + f(p.d) + ": " + p.title + (p.min ? ", " + p.min + " min" : "") + (p.lead && p.lead !== p.title ? ". " + p.lead : "")));
+  }
+  if (o.context) {
+    L.push(""); L.push("## Context for Claude");
+    L.push("- Plan: 30-week plan for the Edinburgh Marathon (Sun 30 May 2027, 10:00 start). Week 1 began Mon 2 Nov 2026. Half marathon (Gate 3) on Sun 4 Apr 2027.");
+    L.push("- Zones from LTHR 188 (Friel): Z1 133-150, Z2 150-167, Z3 167-197. Easy ceiling 167; sub-threshold reps 168-178; marathon effort 160-167.");
+    L.push("- Load rule: no run more than 10% longer than my longest run in the previous 30 days (races exempt).");
+    L.push("- Pain rules: 3/10 or less during, back to baseline by next morning, hip on waking not rising week to week; any gait change stops the session. HOLD = repeat the week's numbers.");
+    L.push("- Strength: physio routine (Bulgarian split squat, single-leg calf raise, single-leg glute bridge, standing ab twist; 3 x 8 each side, Mon and Wed). Effort is 1-10 per side.");
+    L.push("- HRV: 7-day average of ln rMSSD against a band of my 42-day mean +/- 0.5 SD.");
+    if (S.settings.context) { L.push("- My notes: " + mdCell(S.settings.context)); }
+  }
+  return L.join("\n");
+}
+function renderReport(top, view) {
+  if (!VIEW.rep.w) { const t = clampISO(todayISO()); const w = P[t].w; VIEW.rep.w = (dayDiff(t, weekDays(w)[0].d) < 3 && w > 1) ? w - 1 : w; }
+  headerPlain(top, "Weekly report", "Copy or share it into Claude");
+  subRow(top);
+  const sel = el("select", {class: "inp", "aria-label": "Week"});
+  for (let w = 1; w <= PLAN.weeks; w++) { const d = weekDays(w)[0].d; sel.append(el("option", {value: String(w), selected: w === VIEW.rep.w || null}, "Week " + w + " · " + fmt(d, {day: "numeric", month: "short"}) + " · " + PLAN.blocks[w] + (weekSummary(w).logged ? "" : " (no logs)"))); }
+  const pre = el("pre", {class: "rep", id: "repText"});
+  const update = () => { pre.textContent = buildReport(VIEW.rep.w, VIEW.rep); };
+  sel.addEventListener("change", () => { VIEW.rep.w = Number(sel.value); update(); });
+  const tg = (key, label) => { const c = el("input", {type: "checkbox", id: "tg-" + key, checked: VIEW.rep[key] || null});
+    c.addEventListener("change", () => { VIEW.rep[key] = c.checked; update(); });
+    return el("label", {class: "toggle", for: "tg-" + key}, el("span", {text: label}), c); };
+  view.append(el("section", {class: "card pad", style: "display:grid;gap:12px"}, field("Week", sel),
+    el("div", {class: "toggles"}, tg("days", "Day-by-day sessions"), tg("well", "Morning check-ins"), tg("trend", "Trend across weeks"), tg("next", "Next week's plan"), tg("context", "Context for Claude"))));
+  view.append(pre);
+  const share = navigator.share ? el("button", {class: "btn", onclick: async () => {
+    try { await navigator.share({title: "Training report week " + VIEW.rep.w, text: pre.textContent}); } catch (e) { if (e && e.name !== "AbortError") toast("Sharing didn't work. Use Copy instead."); } }}, "Share") : null;
+  view.append(el("div", {class: "btns"},
+    el("button", {class: "btn primary", onclick: () => copyText(pre.textContent)}, "Copy"),
+    share || el("button", {class: "btn", onclick: () => download("training-report-week-" + VIEW.rep.w + ".md", pre.textContent, "text/markdown")}, "Download .md"),
+    share ? el("button", {class: "btn full", onclick: () => download("training-report-week-" + VIEW.rep.w + ".md", pre.textContent, "text/markdown")}, "Download .md") : null));
+  update();
+}
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); toast("Copied. Paste it into Claude."); }
+  catch (e) { const r = document.createRange(); r.selectNodeContents($("repText")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast("Text selected. Use Copy from the menu."); }
+}
+function download(name, text, type) {
+  const a = el("a", {href: URL.createObjectURL(new Blob([text], {type: type})), download: name});
+  document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+}
+
+/* ---------- GUIDE ---------- */
+const G = [{"title":"How this app works","items":[{"p":"Today shows the plan for the day and takes your log: a morning check-in, then what you actually did. Everything saves as you type."},{"p":"Week turns your logs into one decision for next week: PROGRESS or HOLD."},{"p":"Report writes a week up as text you can copy or share straight into Claude."},{"p":"Data holds your backups and settings. Your log lives only on this phone, so export it every week."}]},{"title":"The hip rules","items":[{"dl":[["Stop now","Pain that changes how you run, or anything sharp: stop and walk home."],["During a session","3/10 or less is acceptable."],["Next morning","Back to your usual baseline. If not, the next session is easy and nothing progresses."],["Week to week","Hip on waking must not trend upward. A rising 7-day average turns the week into HOLD."],["Why speed comes last","Easy running is a low hip-flexor load. Hip loading in the swing phase climbs steeply with speed, most of all toward sprinting, so strides, hills, intervals and racing arrive late and behind gates."],["HOLD","Repeat this week's numbers instead of stepping up. The load cap on each run day stops the calendar pushing you on."]]},{"src":"Pain-monitoring model: Silbernagel et al., Am J Sports Med 2007;35:897-906 (an Achilles trial that allowed up to 5/10). Speed and hip loading: Schache et al., Med Sci Sports Exerc 2011;43:1260-1271. Your physio's numbers override these."}]},{"title":"The load rule","items":[{"p":"No run more than 10% longer than your longest run in the previous 30 days. On run days the app shows today's cap. Races and gate tests are exempt."},{"p":"In a cohort of 5,205 runners, a single run 10-30% over the 30-day longest was linked to about 64% higher overuse-injury risk, while weekly mileage ratios showed no such link."},{"src":"Frandsen et al., Br J Sports Med 2025;59:1203-1210. Observational: an association, not proof."}]},{"title":"Gates","items":[{"table":[["Gate","Date","Test","Unlocks"],["1","Sat 23 Jan","Controlled parkrun, HR 168-175","Sub-threshold Tuesdays, strides"],["2","Sat 20 Feb","parkrun, all-out only if the hip allows","5th run day, marathon-effort work"],["3","Sun 4 Apr","Half marathon","Your marathon tier"]]},{"p":"Gate 1 needs all five: decoupling under ~8% on the week-11 long run; no session pain above 3/10 and no gait change for three weeks; hip on waking not rising, ideally 0-2; HRV inside your band; base completion above ~80%."},{"p":"Gate 2 needs three weeks of sub-threshold and strides at 3/10 or less with no morning flare, and your physio happy with the weaker side. An all-out 5K should average close to LTHR 188; if it doesn't, the zones need re-anchoring."},{"p":"Gate 3: race the half only if Gate 2 was all-out and the hip has stayed quiet. Otherwise run it at marathon effort and take tier C."}]},{"title":"Marathon tiers","items":[{"table":[["Tier","Half marathon","Marathon target"],["A","1:52-1:55, run evenly","Sub-4 (5:41/km)"],["B","1:55-2:02","4:00-4:15"],["C","Not raced, hip complained, or slower","Run by HR (cap ~162) to 30 km"]]},{"p":"Riegel turns a 1:55 half into almost exactly 4:00, and it flatters runners with a thin endurance base, hence the faster end. Sub-4 is a stretch target; arriving at the start healthy is the plan."}]},{"title":"Heat and race morning","items":[{"table":[["Conditions","Adjust","Sub-4 becomes"],["Under 10°C, overcast","none","4:00"],["10-15°C","+5-10 s/km","~4:04-4:07"],["15-20°C","+12-20 s/km","~4:09-4:14"],["Over 20°C or full sun","+22-35 s/km","~4:16-4:25"]]},{"p":"Decide at breakfast, never at 30 km. EMF 2026 reached about 23°C and almost 60 runners were treated for heat exhaustion. Late May in Edinburgh is usually 8-15°C."},{"p":"Acclimation, weeks 26-30: a hot bath after an easy run, about 40°C, chest-deep, 30-40 min. Week 26: 4 sessions. Week 27: 4-5, not after the peak run. Weeks 28-29: one every ~3 days. Race week: the last one on Wednesday or Thursday."},{"p":"Cramp: the best predictors are a history of cramping and racing harder than you trained, not low salt. The marathon-effort blocks in weeks 24-27 are the real fix. If one hits: slow down, stretch and hold the muscle, walk 60-90 s."},{"src":"Ely et al., Med Sci Sports Exerc 2007;39:487-493. Daanen et al., Sports Med 2018;48:409-430. Schwellnus et al., Br J Sports Med 2011;45:650-656."}]},{"title":"Heart-rate zones (LTHR 188)","items":[{"table":[["Zone","bpm","Used for"],["Z1","133-150","Recovery runs, walks"],["Z2","150-167","Easy and long runs; marathon effort 160-167"],["Z3","167-197","Sub-threshold reps 168-178, from week 13"],["Z4","197-207","Gate 2 and races only"]]},{"p":"Pram runs read 5-10 bpm higher at the same effort. Go by HR, never pace, and push two-handed."}]},{"title":"Questions for your physio","items":[{"dl":[["1","How often: twice a week, as the plan assumes, or more?"],["2","When should the load go up on the 3 × 8?"],["3","What pain ceiling during and after runs? The plan uses 3/10."],["4","When are strides, hills and sub-threshold work OK? The plan unlocks them from late January."],["5","Does a long-run ladder from 30 min now to 160 min on 8 May fit their timeline?"],["6","When can full-body strength come back?"]]}]},{"title":"The race","items":[{"p":"Edinburgh Marathon, Sunday 30 May 2027, 10:00 start. Entries close 31 January 2027 at the latest and usually sell out before then."},{"p":"Not medical advice. Where your physio's instructions differ from this plan, theirs win."}]}];
+function renderGuide(top, view) {
+  headerPlain(top, "Guide", "The rules behind the plan");
+  subRow(top);
+  const card = el("section", {class: "card guide"});
+  G.forEach((sec, i) => {
+    const body = el("div", {class: "gb"});
+    sec.items.forEach(it => {
+      if (it.p) body.append(el("p", {text: it.p}));
+      if (it.dl) body.append(el("dl", {}, it.dl.map(([k, v]) => [el("dt", {text: k}), el("dd", {text: v})])));
+      if (it.table) { const t = el("table"); t.append(el("tr", {}, it.table[0].map(h => el("th", {text: h})))); it.table.slice(1).forEach(r => t.append(el("tr", {}, r.map(c => el("td", {text: c}))))); body.append(el("div", {class: "tbl"}, t)); }
+      if (it.src) body.append(el("p", {class: "src", text: it.src}));
+    });
+    card.append(el("details", {open: i === 0 || null}, el("summary", {}, sec.title), body));
+  });
+  view.append(card);
+}
+
+/* ---------- DATA ---------- */
+function renderData(top, view) {
+  headerPlain(top, "Your data", "Stored only on this phone");
+  subRow(top);
+  const days = loggedDays();
+  const last = S.settings.lastExport;
+  const bk = el("section", {class: "card form"}, el("h2", {class: "ct", text: "Backup"}),
+    el("p", {class: "hint", text: last ? "Last export: " + fmt(last.slice(0, 10), {day: "numeric", month: "short", year: "numeric"}) + " (" + dayDiff(todayISO(), last.slice(0, 10)) + " days ago)." : "No backup yet."}),
+    el("div", {class: "btns"},
+      el("button", {class: "btn primary", onclick: exportData}, "Export backup"),
+      el("button", {class: "btn", onclick: () => $("importFile").click()}, "Import backup"),
+      el("button", {class: "btn full", onclick: shareBackup}, "Share backup to Drive or email")),
+    el("p", {class: "hint", text: "Export saves a .json file to Downloads. Share sends the same data as a .txt file, which Android can pass to Google Drive or Gmail. Import accepts either."}));
+  if (VIEW.pendingImport) {
+    const pi = VIEW.pendingImport;
+    bk.append(el("div", {class: "banner"},
+      el("b", {text: "Replace your data with this backup?"}),
+      el("p", {text: pi.name + ": " + pi.count + " logged days" + (pi.count ? " (" + fmt(pi.first, {day: "numeric", month: "short"}) + " to " + fmt(pi.last, {day: "numeric", month: "short"}) + ")" : "") + (pi.exportedAt ? ", exported " + fmt(pi.exportedAt.slice(0, 10), {day: "numeric", month: "short", year: "numeric"}) : "") + ". This replaces the " + days.length + " logged days on this phone. Your current data is kept as an undo snapshot."}),
+      el("div", {class: "btns"}, el("button", {class: "btn primary", onclick: applyImport}, "Replace my data"), el("button", {class: "btn", onclick: () => { VIEW.pendingImport = null; render(); }}, "Cancel"))));
+  }
+  if (snapshotInfo) bk.append(el("div", {class: "banner info"},
+    el("b", {text: "Undo available"}),
+    el("p", {text: "The data you had before the last " + snapshotInfo.reason + " (" + snapshotInfo.count + " logged days, saved " + new Date(snapshotInfo.savedAt).toLocaleString("en-GB") + ") can be restored."}),
+    el("button", {class: "btn", onclick: undoSnapshot}, "Restore previous data")));
+  view.append(bk);
+  view.append(el("section", {class: "card form"}, el("h2", {class: "ct", text: "Storage"}),
+    el("dl", {class: "kv"},
+      el("dt", {text: "Persistent storage"}), el("dd", {id: "persistVal", text: persisted === null ? "checking" : (persisted ? "granted" : "not granted")}),
+      el("dt", {text: "Stored in"}), el("dd", {text: store.mode}),
+      el("dt", {text: "Logged days"}), el("dd", {text: String(days.length)}),
+      el("dt", {text: "Space used"}), el("dd", {id: "usageVal", text: "–"})),
+    el("p", {class: "hint", id: "persistHint", text: persisted ? "Chrome won't clear this data to free up space. Clearing site data or uninstalling still will." : "Not granted yet: Chrome may clear the data if the phone runs short of space. Installing the app usually fixes this. Export regularly either way."})));
+  if (navigator.storage && navigator.storage.estimate) navigator.storage.estimate().then(e => { const u = $("usageVal"); if (u) u.textContent = Math.max(1, Math.round((e.usage || 0) / 1024)) + " KB"; }).catch(() => {});
+  const pre = el("input", {class: "inp", type: "text", inputmode: "numeric", placeholder: "e.g. 28", value: S.settings.preLongest === null || S.settings.preLongest === undefined ? "" : String(S.settings.preLongest)});
+  pre.addEventListener("input", () => { S.settings.preLongest = num(pre.value); scheduleSave(); });
+  const ctx = el("textarea", {class: "inp", placeholder: "Anything Claude should know when reading your reports: injury history, what your physio said, race goals. Stays on this phone and goes into reports only if you include it."});
+  ctx.value = S.settings.context || "";
+  ctx.addEventListener("input", () => { S.settings.context = ctx.value.slice(0, 4000); scheduleSave(); });
+  const theme = el("div", {class: "seg2", style: "grid-template-columns:repeat(3,1fr)"});
+  [["dark", "Dark"], ["light", "Light"], ["auto", "Match phone"]].forEach(([v, t]) => theme.append(el("button", {type: "button", "aria-pressed": (S.settings.theme || "dark") === v ? "true" : "false", text: t,
+    onclick: () => { S.settings.theme = v; applyTheme(); scheduleSave(); theme.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.textContent === t))); }})));
+  view.append(el("section", {class: "card form"}, el("h2", {class: "ct", text: "Settings"}),
+    field("Longest run in the 30 days before 2 Nov (min)", pre),
+    el("p", {class: "hint", text: "Seeds the load cap for the first four weeks."}),
+    field("Notes for Claude", ctx),
+    field("Theme", theme)));
+  const confirmInp = el("input", {class: "inp", type: "text", autocomplete: "off", placeholder: "Type ERASE"});
+  const eraseBtn = el("button", {class: "btn danger full", disabled: true, onclick: eraseAll}, "Erase everything on this phone");
+  confirmInp.addEventListener("input", () => { eraseBtn.disabled = confirmInp.value.trim() !== "ERASE"; });
+  view.append(el("section", {class: "card form"}, el("h2", {class: "ct", text: "Erase"}),
+    el("p", {class: "hint", text: "Deletes every log and setting in this app. Export first: there is no undo."}), confirmInp, eraseBtn));
+  view.append(el("p", {class: "hint", style: "text-align:center", text: "Edinburgh 2027 · app " + APP_VERSION + " · plan v2 (2 Nov 2026) · works offline once installed"}));
+}
+function backupPayload() { return Object.assign(clone(S), {exportedAt: new Date().toISOString(), appVersion: APP_VERSION}); }
+function markExported() { S.settings.lastExport = new Date().toISOString(); scheduleSave(); }
+function exportData() {
+  download("edinburgh-2027-backup-" + todayISO() + ".json", JSON.stringify(backupPayload(), null, 1), "application/json");
+  markExported(); toast("Backup saved to Downloads"); if (VIEW.tab !== "data") render();
+}
+async function shareBackup() {
+  const name = "edinburgh-2027-backup-" + todayISO() + ".txt";
+  const file = new File([JSON.stringify(backupPayload())], name, {type: "text/plain"});
+  if (navigator.canShare && navigator.canShare({files: [file]})) {
+    try { await navigator.share({files: [file], title: "Training log backup"}); markExported(); toast("Backup shared"); render(); }
+    catch (e) { if (e && e.name !== "AbortError") toast("Sharing didn't work. Use Export instead."); }
+  } else { toast("This browser can't share files. Use Export instead."); }
+}
+const STR = (v, max) => typeof v === "string" ? v.slice(0, max) : undefined;
+function cleanSection(src, spec) {
+  if (!src || typeof src !== "object") return undefined;
+  const out = {};
+  for (const [k, kind] of Object.entries(spec)) {
+    const v = src[k];
+    if (kind === "n") { const n = num(v); if (n !== null) out[k] = n; }
+    else if (kind === "s") { const s = STR(v, 2000); if (s) out[k] = s; }
+    else if (Array.isArray(kind)) { if (kind.indexOf(v) >= 0) out[k] = v; }
+  }
+  return Object.keys(out).length ? out : undefined;
+}
+function sanitize(data) {
+  if (!data || typeof data !== "object" || data.app !== APP_ID || !data.days || typeof data.days !== "object") throw new Error("This file isn't a backup from this app.");
+  if ((data.schema || 0) > SCHEMA) throw new Error("This backup comes from a newer version of the app. Update the app first.");
+  const sessSpec = {status: ["done", "short", "skipped"], type: TYPES.map(t => t[0]), min: "n", km: "n", avgHr: "n", maxHr: "n", cad: "n", rpe: "n", hip: "n", knee: "n", gait: ["yes", "no"], notes: "s"};
+  const wellSpec = {sleepH: "n", sleepQ: "n", mood: "n", stress: "n", energy: "n", rhr: "n", hrv: "n", hipAM: "n", kneeAM: "n", alcohol: "n", line: "s"};
+  const exSpec = {kg: "n", sets: "n", effR: "n", effL: "n", pain: "n"};
+  const days = {};
+  for (const [iso, d] of Object.entries(data.days)) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(iso) || !d || typeof d !== "object") continue;
+    const o = {};
+    const s = cleanSection(d.session, sessSpec); if (s) o.session = s;
+    const w = cleanSection(d.well, wellSpec); if (w) o.well = w;
+    if (d.physio && typeof d.physio === "object") { const ph = {}; EX.forEach(([k]) => { const e = cleanSection(d.physio[k], exSpec); if (e) ph[k] = e; }); if (Object.keys(ph).length) o.physio = ph; }
+    if (Object.keys(o).length) { o.updatedAt = STR(d.updatedAt, 40) || null; days[iso] = o; }
+  }
+  const st = data.settings || {};
+  return {app: APP_ID, schema: SCHEMA, createdAt: STR(data.createdAt, 40) || new Date().toISOString(), updatedAt: STR(data.updatedAt, 40) || null,
+    settings: {preLongest: num(st.preLongest), theme: ["dark", "light", "auto"].indexOf(st.theme) >= 0 ? st.theme : (S.settings.theme || "dark"),
+      context: STR(st.context, 4000) || "", lastExport: STR(st.lastExport, 40) || S.settings.lastExport || null, welcomed: true}, days};
+}
+$("importFile").addEventListener("change", async e => {
+  const f = e.target.files && e.target.files[0]; e.target.value = "";
+  if (!f) return;
+  try {
+    const text = await f.text();
+    let data; try { data = JSON.parse(text); } catch (err) { throw new Error("That file isn't readable JSON."); }
+    const clean = sanitize(data);
+    const keys = Object.keys(clean.days).sort();
+    VIEW.pendingImport = {state: clean, name: f.name, count: keys.length, first: keys[0], last: keys[keys.length - 1], exportedAt: STR(data.exportedAt, 40)};
+    VIEW.tab = "data"; render();
+  } catch (err) { toast(err.message || "Import failed"); }
+});
+async function keepSnapshot(reason) {
+  const snap = {savedAt: new Date().toISOString(), reason: reason, count: loggedDays().length, state: clone(S)};
+  await store.set("snapshot", snap); snapshotInfo = {savedAt: snap.savedAt, reason: reason, count: snap.count};
+}
+async function applyImport() {
+  const pi = VIEW.pendingImport; if (!pi) return;
+  try { await flush(); await keepSnapshot("import"); S = pi.state; VIEW.pendingImport = null; dirty = true; await flush(); applyTheme(); render(); toast("Imported " + pi.count + " logged days"); }
+  catch (e) { toast("Import failed: " + (e.message || "storage error")); }
+}
+async function undoSnapshot() {
+  try { const snap = await store.get("snapshot"); if (!snap || !snap.state) { toast("Nothing to restore"); return; }
+    S = snap.state; await store.del("snapshot"); snapshotInfo = null; dirty = true; await flush(); applyTheme(); render(); toast("Previous data restored"); }
+  catch (e) { toast("Restore failed: " + (e.message || "storage error")); }
+}
+async function eraseAll() {
+  try { const theme = S.settings.theme; S = blankState(); S.settings.theme = theme; S.settings.welcomed = true; await store.del("snapshot"); snapshotInfo = null; dirty = true; await flush(); render(); toast("Everything erased"); }
+  catch (e) { toast("Erase failed: " + (e.message || "storage error")); }
+}
+
+/* ---------- theme, service worker, start ---------- */
+function applyTheme() {
+  const t = (S && S.settings.theme) || "dark";
+  document.documentElement.setAttribute("data-theme", t);
+  try { localStorage.setItem("e27-theme", t); } catch (e) {}
+  const dark = t === "dark" || (t === "auto" && matchMedia("(prefers-color-scheme: dark)").matches);
+  document.querySelector('meta[name="theme-color"]').setAttribute("content", dark ? "#0D1514" : "#F1F5F3");
+}
+function updateBanner() {
+  if ($("updBanner")) return;
+  const b = el("div", {class: "banner info", id: "updBanner"}, el("b", {text: "A new version is ready"}), el("p", {text: "Your data is untouched. Reload to switch."}),
+    el("button", {class: "btn primary", onclick: async () => { await flush(); location.reload(); }}, "Reload"));
+  $("view").prepend(b);
+}
+document.querySelectorAll("nav.tabs button").forEach(b => b.addEventListener("click", () => setTab(b.dataset.tab)));
+window.addEventListener("hashchange", () => { const t = location.hash.slice(1); if (["today", "week", "report", "guide", "data"].indexOf(t) >= 0 && t !== VIEW.tab) { VIEW.tab = t; render(); } });
+async function start() {
+  try { persisted = await navigator.storage.persist(); } catch (e) { persisted = false; }
+  await store.init();
+  let st; try { st = await store.get("state"); } catch (e) { st = undefined; }
+  S = st && st.app === APP_ID ? st : blankState();
+  if (!S.settings) S.settings = blankState().settings;
+  try { const snap = await store.get("snapshot"); if (snap && snap.state) snapshotInfo = {savedAt: snap.savedAt, reason: snap.reason, count: snap.count}; } catch (e) {}
+  applyTheme();
+  const h = location.hash.slice(1); if (["today", "week", "report", "guide", "data"].indexOf(h) >= 0) VIEW.tab = h;
+  render();
+  if (!st) { dirty = true; flush(); }
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("./service-worker.js").then(reg => {
+      reg.addEventListener("updatefound", () => { const nw = reg.installing; if (!nw) return;
+        nw.addEventListener("statechange", () => { if (nw.state === "activated" && hadController) updateBanner(); }); });
+    }).catch(() => {});
+  }
+}
+const hadController = !!(navigator.serviceWorker && navigator.serviceWorker.controller);
+start();
+</script>
+</body>
+</html>
